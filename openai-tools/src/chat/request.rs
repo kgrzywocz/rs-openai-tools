@@ -389,6 +389,8 @@ pub(crate) struct Body {
     /// A stable identifier for the end user, used for safety monitoring and abuse detection
     #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) safety_identifier: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) user: Option<String>,
 }
 
 /// OpenAI Chat Completions API client
@@ -1181,6 +1183,31 @@ impl ChatCompletion {
         self
     }
 
+    /// Sets a unique identifier representing your end-user, which can help to monitor and detect abuse
+    ///
+    /// A unique identifier representing your end-user, which can help to monitor and detect abuse.
+    ///
+    /// # Arguments
+    ///
+    /// * `user` - A identifier representing your end-user.
+    ///
+    /// # Returns
+    ///
+    /// A mutable reference to self for method chaining
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use openai_tools::chat::request::ChatCompletion;
+    ///
+    /// let mut chat = ChatCompletion::new();
+    /// chat.user("abc123");
+    /// ```
+    pub fn user<T: AsRef<str>>(&mut self, user: T) -> &mut Self {
+        self.request_body.user = Some(user.as_ref().to_string());
+        self
+    }
+
     /// Gets the current message history
     ///
     /// # Returns
@@ -1893,6 +1920,17 @@ mod tests {
         // Verify serialization
         let json = serde_json::to_value(&chat.request_body).unwrap();
         assert_eq!(json["safety_identifier"], "user_abc123");
+    }
+
+    #[test]
+    fn test_user() {
+        let mut chat = ChatCompletion::test_new_with_model(ChatModel::Gpt4oMini);
+        chat.user("abc123");
+        assert_eq!(chat.request_body.user, Some("abc123".to_string()));
+
+        // Verify serialization
+        let json = serde_json::to_value(&chat.request_body).unwrap();
+        assert_eq!(json["user"], "abc123");
     }
 
     #[test]

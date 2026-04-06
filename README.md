@@ -195,6 +195,29 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 ```
 
+### User
+
+Track end users for abuse detection with `user`:
+
+```rust
+use openai_tools::chat::request::ChatCompletion;
+use openai_tools::common::{message::Message, role::Role, models::ChatModel};
+
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let mut chat = ChatCompletion::new();
+    let response = chat
+        .model(ChatModel::Gpt5Mini)
+        .messages(vec![Message::from_string(Role::User, "Hello!")])
+        .user("user-id")
+        .chat()
+        .await?;
+
+    println!("{:?}", response.choices[0].message.content);
+    Ok(())
+}
+```
+
 ## Responses API
 
 ```rust
