@@ -316,6 +316,11 @@ pub enum ChatModel {
     #[serde(rename = "o4-mini")]
     O4Mini,
 
+    // Gemini
+    /// Gemini 3.1 Flash Lite - Fast, cost-effective Gemini variant
+    #[serde(rename = "gemini-3.1-flash-lite")]
+    Gemini3_1FlashLite,
+
     // === Custom Model ===
     /// Custom model ID for fine-tuned models or new models not yet in enum
     #[serde(untagged)]
@@ -364,6 +369,8 @@ impl ChatModel {
             Self::O3 => "o3",
             Self::O3Mini => "o3-mini",
             Self::O4Mini => "o4-mini",
+            // Gemini
+            Self::Gemini3_1FlashLite => "gemini-3.1-flash-lite",
             // Custom
             Self::Custom(s) => s.as_str(),
         }
