@@ -39,18 +39,43 @@ use std::time::Duration;
 const IMAGES_PATH: &str = "images";
 
 /// Image generation models.
+///
+/// # DALL-E retirement
+///
+/// OpenAI retired `dall-e-2` and `dall-e-3` on `api.openai.com` - requests
+/// naming them fail with "The model 'dall-e-3' does not exist." The variants
+/// are kept because Azure OpenAI deployments can still serve DALL-E, but new
+/// OpenAI code should use one of the GPT Image models.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub enum ImageModel {
     /// DALL-E 2 model - supports variations, smaller sizes
+    ///
+    /// Retired on OpenAI; may still exist as an Azure deployment.
     #[serde(rename = "dall-e-2")]
     DallE2,
     /// DALL-E 3 model - higher quality, HD support, style options
+    ///
+    /// Retired on OpenAI; may still exist as an Azure deployment.
     #[serde(rename = "dall-e-3")]
-    #[default]
     DallE3,
-    /// GPT Image model - latest generation
+    /// GPT Image model - latest generation (default)
     #[serde(rename = "gpt-image-1")]
+    #[default]
     GptImage1,
+    /// GPT Image 1 Mini - cheaper gpt-image-1 for high-volume generation
+    #[serde(rename = "gpt-image-1-mini")]
+    GptImage1Mini,
+    /// GPT Image 1.5 - refreshed gpt-image-1
+    #[serde(rename = "gpt-image-1.5")]
+    GptImage1_5,
+    /// GPT Image 2 - state-of-the-art generation and editing
+    #[serde(rename = "gpt-image-2")]
+    GptImage2,
+    /// ChatGPT Image Latest - image model currently used in ChatGPT
+    ///
+    /// Requires a verified organization.
+    #[serde(rename = "chatgpt-image-latest")]
+    ChatGptImageLatest,
 }
 
 impl ImageModel {
@@ -60,6 +85,10 @@ impl ImageModel {
             Self::DallE2 => "dall-e-2",
             Self::DallE3 => "dall-e-3",
             Self::GptImage1 => "gpt-image-1",
+            Self::GptImage1Mini => "gpt-image-1-mini",
+            Self::GptImage1_5 => "gpt-image-1.5",
+            Self::GptImage2 => "gpt-image-2",
+            Self::ChatGptImageLatest => "chatgpt-image-latest",
         }
     }
 }
@@ -89,6 +118,15 @@ pub enum ImageSize {
     /// 1024x1792 pixels - portrait (DALL-E 3 only)
     #[serde(rename = "1024x1792")]
     Size1024x1792,
+    /// 1024x1536 pixels - portrait (GPT Image models)
+    #[serde(rename = "1024x1536")]
+    Size1024x1536,
+    /// 1536x1024 pixels - landscape (GPT Image models)
+    #[serde(rename = "1536x1024")]
+    Size1536x1024,
+    /// Let the model choose the size (GPT Image models)
+    #[serde(rename = "auto")]
+    Auto,
 }
 
 impl ImageSize {
@@ -100,6 +138,9 @@ impl ImageSize {
             Self::Size1024x1024 => "1024x1024",
             Self::Size1792x1024 => "1792x1024",
             Self::Size1024x1792 => "1024x1792",
+            Self::Size1024x1536 => "1024x1536",
+            Self::Size1536x1024 => "1536x1024",
+            Self::Auto => "auto",
         }
     }
 }
@@ -110,15 +151,27 @@ impl std::fmt::Display for ImageSize {
     }
 }
 
-/// Image quality options (DALL-E 3 only).
+/// Image quality options.
+///
+/// `Standard` and `Hd` apply to DALL-E 3. The GPT Image models
+/// (`gpt-image-1`, `gpt-image-1-mini`, `gpt-image-2`) use
+/// `Low`/`Medium`/`High`/`Auto` instead.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
 #[serde(rename_all = "lowercase")]
 pub enum ImageQuality {
-    /// Standard quality
+    /// Standard quality (DALL-E 3)
     #[default]
     Standard,
-    /// High definition quality
+    /// High definition quality (DALL-E 3)
     Hd,
+    /// Low quality - cheapest and fastest (GPT Image models)
+    Low,
+    /// Medium quality (GPT Image models)
+    Medium,
+    /// High quality (GPT Image models)
+    High,
+    /// Let the model pick the quality (GPT Image models)
+    Auto,
 }
 
 impl ImageQuality {
@@ -127,6 +180,10 @@ impl ImageQuality {
         match self {
             Self::Standard => "standard",
             Self::Hd => "hd",
+            Self::Low => "low",
+            Self::Medium => "medium",
+            Self::High => "high",
+            Self::Auto => "auto",
         }
     }
 }
@@ -176,17 +233,26 @@ impl ResponseFormat {
 /// Options for image generation.
 #[derive(Debug, Clone, Default)]
 pub struct GenerateOptions {
-    /// The model to use (defaults to DALL-E 3)
+    /// The model to use; when `None` the API picks its own default
     pub model: Option<ImageModel>,
     /// Number of images to generate (1-10, DALL-E 3 only supports 1)
     pub n: Option<u32>,
-    /// Image quality (DALL-E 3 only)
+    /// Image quality
+    ///
+    /// DALL-E 3 takes `standard`/`hd`; the GPT Image models take
+    /// `low`/`medium`/`high`/`auto` and reject the DALL-E values.
     pub quality: Option<ImageQuality>,
     /// Response format (URL or base64)
+    ///
+    /// **DALL-E only.** The GPT Image models reject this parameter with
+    /// `unknown_parameter` and always return base64 data.
     pub response_format: Option<ResponseFormat>,
     /// Image size
     pub size: Option<ImageSize>,
-    /// Image style (DALL-E 3 only)
+    /// Image style
+    ///
+    /// **DALL-E 3 only.** The GPT Image models reject this parameter with
+    /// `unknown_parameter`.
     pub style: Option<ImageStyle>,
     /// User identifier for abuse monitoring
     pub user: Option<String>,
@@ -626,5 +692,106 @@ impl Images {
         }
 
         serde_json::from_str::<ImageResponse>(&content).map_err(OpenAIToolError::SerdeJsonError)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // =========================================================================
+    // Image models added in 2026.
+    //
+    // Model IDs, sizes and quality values verified against the OpenAI API
+    // reference (https://developers.openai.com/api/docs/models), August 2026.
+    // =========================================================================
+
+    #[test]
+    fn test_new_image_models_as_str() {
+        assert_eq!(ImageModel::GptImage2.as_str(), "gpt-image-2");
+        assert_eq!(ImageModel::GptImage1Mini.as_str(), "gpt-image-1-mini");
+    }
+
+    #[test]
+    fn test_new_image_models_serialization() {
+        for (model, expected) in [(ImageModel::GptImage2, "gpt-image-2"), (ImageModel::GptImage1Mini, "gpt-image-1-mini")] {
+            let json = serde_json::to_string(&model).unwrap();
+            assert_eq!(json, format!("\"{}\"", expected), "Wrong serialization for {:?}", model);
+            let deserialized: ImageModel = serde_json::from_str(&json).unwrap();
+            assert_eq!(deserialized, model, "Serialization roundtrip failed for {:?}", model);
+        }
+    }
+
+    /// The GPT Image models use portrait/landscape sizes that differ from the
+    /// DALL-E 3 set.
+    #[test]
+    fn test_gpt_image_sizes() {
+        assert_eq!(ImageSize::Size1024x1536.as_str(), "1024x1536");
+        assert_eq!(ImageSize::Size1536x1024.as_str(), "1536x1024");
+
+        for (size, expected) in [(ImageSize::Size1024x1536, "1024x1536"), (ImageSize::Size1536x1024, "1536x1024")] {
+            let json = serde_json::to_string(&size).unwrap();
+            assert_eq!(json, format!("\"{}\"", expected), "Wrong serialization for {:?}", size);
+        }
+    }
+
+    /// GPT Image models take `low`/`medium`/`high`/`auto` instead of the
+    /// DALL-E 3 `standard`/`hd` pair.
+    #[test]
+    fn test_gpt_image_quality_values() {
+        assert_eq!(ImageQuality::Low.as_str(), "low");
+        assert_eq!(ImageQuality::Medium.as_str(), "medium");
+        assert_eq!(ImageQuality::High.as_str(), "high");
+        assert_eq!(ImageQuality::Auto.as_str(), "auto");
+
+        // The DALL-E 3 values must keep working.
+        assert_eq!(ImageQuality::Standard.as_str(), "standard");
+        assert_eq!(ImageQuality::Hd.as_str(), "hd");
+    }
+
+    #[test]
+    fn test_gpt_image_quality_serialization() {
+        for (quality, expected) in [
+            (ImageQuality::Low, "low"),
+            (ImageQuality::Medium, "medium"),
+            (ImageQuality::High, "high"),
+            (ImageQuality::Auto, "auto"),
+            (ImageQuality::Standard, "standard"),
+            (ImageQuality::Hd, "hd"),
+        ] {
+            let json = serde_json::to_string(&quality).unwrap();
+            assert_eq!(json, format!("\"{}\"", expected), "Wrong serialization for {:?}", quality);
+            let deserialized: ImageQuality = serde_json::from_str(&json).unwrap();
+            assert_eq!(deserialized, quality, "Serialization roundtrip failed for {:?}", quality);
+        }
+    }
+
+    /// Image models present in the live /v1/models listing but previously
+    /// missing from the enum. Verified live against the API (August 2026).
+    #[test]
+    fn test_previously_missing_image_models() {
+        for (model, expected) in [(ImageModel::GptImage1_5, "gpt-image-1.5"), (ImageModel::ChatGptImageLatest, "chatgpt-image-latest")] {
+            assert_eq!(model.as_str(), expected, "Wrong model ID for {:?}", model);
+            let json = serde_json::to_string(&model).unwrap();
+            assert_eq!(json, format!("\"{}\"", expected), "Wrong serialization for {:?}", model);
+            let deserialized: ImageModel = serde_json::from_str(&json).unwrap();
+            assert_eq!(deserialized, model, "Serialization roundtrip failed for {:?}", model);
+        }
+    }
+
+    /// OpenAI retired `dall-e-2`/`dall-e-3` on api.openai.com, so the default
+    /// must name a model that still resolves there. The variants stay because
+    /// Azure OpenAI deployments can still serve DALL-E.
+    #[test]
+    fn test_default_image_model_is_a_live_openai_model() {
+        assert_eq!(ImageModel::default(), ImageModel::GptImage1);
+        assert_ne!(ImageModel::default(), ImageModel::DallE3, "the default must not be a retired model");
+    }
+
+    /// The GPT Image models accept `auto` in place of an explicit size.
+    #[test]
+    fn test_auto_image_size() {
+        assert_eq!(ImageSize::Auto.as_str(), "auto");
+        assert_eq!(serde_json::to_string(&ImageSize::Auto).unwrap(), "\"auto\"");
     }
 }

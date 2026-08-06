@@ -8,80 +8,71 @@
 
 use openai_tools::images::request::{GenerateOptions, ImageModel, ImageQuality, ImageSize, ImageStyle, Images, ResponseFormat};
 
-/// Test basic image generation with DALL-E 3.
+/// Test basic image generation with GPT Image 1 Mini.
+///
+/// OpenAI retired `dall-e-2`/`dall-e-3`, so these tests target the cheapest
+/// live model and use `low` quality to keep costs down.
 #[tokio::test]
-async fn test_generate_image_dall_e_3() {
+async fn test_generate_image_gpt_image_mini() {
     let images = Images::new().expect("Should create Images client");
 
-    let options = GenerateOptions { model: Some(ImageModel::DallE3), size: Some(ImageSize::Size1024x1024), ..Default::default() };
+    let options = GenerateOptions {
+        model: Some(ImageModel::GptImage1Mini),
+        size: Some(ImageSize::Size1024x1024),
+        quality: Some(ImageQuality::Low),
+        ..Default::default()
+    };
 
     let response = images.generate("A simple red circle on white background", options).await.expect("Should generate image");
 
-    // Verify response structure
     assert!(response.created > 0, "Created timestamp should be positive");
-    assert_eq!(response.data.len(), 1, "DALL-E 3 generates one image");
+    assert_eq!(response.data.len(), 1, "Should generate one image");
 
-    // Verify image data
+    // The GPT Image models always return base64 data rather than a URL.
     let image = &response.data[0];
-    assert!(image.url.is_some(), "Should have URL");
+    assert!(image.b64_json.is_some(), "GPT Image models return base64 data");
 
-    // DALL-E 3 may revise the prompt
-    // revised_prompt may or may not be present
-    println!("Image URL: {:?}", image.url);
-    if let Some(revised) = &image.revised_prompt {
-        println!("Revised prompt: {}", revised);
-    }
+    let bytes = image.as_bytes().expect("Should have bytes").expect("Should decode base64");
+    assert!(!bytes.is_empty(), "Decoded image should not be empty");
+    println!("Generated {} bytes", bytes.len());
 }
 
-/// Test image generation with different options.
+/// Test generation with a portrait size.
 #[tokio::test]
-async fn test_generate_image_with_options() {
+async fn test_generate_image_portrait_size() {
     let images = Images::new().expect("Should create Images client");
 
     let options = GenerateOptions {
-        model: Some(ImageModel::DallE3),
-        size: Some(ImageSize::Size1024x1024),
-        quality: Some(ImageQuality::Standard),
-        style: Some(ImageStyle::Natural),
+        model: Some(ImageModel::GptImage1Mini),
+        size: Some(ImageSize::Size1024x1536),
+        quality: Some(ImageQuality::Low),
         ..Default::default()
     };
 
-    let response = images.generate("A blue square", options).await.expect("Should generate image with options");
+    let response = images.generate("A blue square", options).await.expect("Should generate a portrait image");
 
     assert_eq!(response.data.len(), 1);
-    assert!(response.data[0].url.is_some());
+    assert!(response.data[0].b64_json.is_some());
 }
 
-/// Test image generation with base64 response format.
-/// Note: This test generates a small image to reduce data transfer.
+/// The GPT Image models reject `response_format` outright - the library must
+/// surface that as an error rather than silently dropping it.
 #[tokio::test]
-async fn test_generate_image_b64_json() {
+async fn test_gpt_image_rejects_response_format() {
     let images = Images::new().expect("Should create Images client");
 
     let options = GenerateOptions {
-        model: Some(ImageModel::DallE3),
+        model: Some(ImageModel::GptImage1Mini),
         response_format: Some(ResponseFormat::B64Json),
         size: Some(ImageSize::Size1024x1024),
+        quality: Some(ImageQuality::Low),
         ..Default::default()
     };
 
-    let response = images.generate("A small green dot", options).await.expect("Should generate image with base64");
+    let result = images.generate("A small green dot", options).await;
 
-    assert_eq!(response.data.len(), 1);
-    let image = &response.data[0];
-
-    // Should have base64 data, not URL
-    assert!(image.b64_json.is_some(), "Should have b64_json");
-    assert!(image.url.is_none(), "Should not have URL");
-
-    // Verify we can decode the base64
-    let bytes = image.as_bytes().expect("Should have bytes");
-    assert!(bytes.is_ok(), "Should decode base64 successfully");
-
-    let decoded = bytes.unwrap();
-    assert!(!decoded.is_empty(), "Decoded bytes should not be empty");
-
-    println!("Decoded image size: {} bytes", decoded.len());
+    assert!(result.is_err(), "GPT Image models do not accept response_format");
+    println!("Error (expected): {:?}", result.err());
 }
 
 /// Test ImageModel enum functionality.
@@ -92,7 +83,8 @@ fn test_image_model_enum() {
     assert_eq!(ImageModel::GptImage1.as_str(), "gpt-image-1");
 
     assert_eq!(format!("{}", ImageModel::DallE3), "dall-e-3");
-    assert_eq!(ImageModel::default(), ImageModel::DallE3);
+    // The default must name a model that still resolves on api.openai.com.
+    assert_eq!(ImageModel::default(), ImageModel::GptImage1);
 }
 
 /// Test ImageSize enum functionality.

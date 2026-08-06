@@ -255,7 +255,8 @@ mod tests {
 
     #[test]
     fn test_defaults() {
-        assert_eq!(ImageModel::default(), ImageModel::DallE3);
+        // DALL-E was retired on api.openai.com, so the default names a live model.
+        assert_eq!(ImageModel::default(), ImageModel::GptImage1);
         assert_eq!(ImageSize::default(), ImageSize::Size1024x1024);
         assert_eq!(ImageQuality::default(), ImageQuality::Standard);
         assert_eq!(ImageStyle::default(), ImageStyle::Vivid);
