@@ -15,7 +15,14 @@ anyhow = "1.0.100"
 base64 = "0.22.1"
 derive-new = "0.7.0"
 dotenvy = "0.15.7"
-image = "0.25.9"
+# Only the formats `Content::from_image_file` accepts. The default feature set
+# pulls in AVIF encoding (ravif -> rav1e -> bitstream-io -> the yanked core2)
+# plus a dozen codecs this crate never touches.
+image = { version = "0.25.9", default-features = false, features = [
+    "png",
+    "jpeg",
+    "gif",
+] }
 request = { package = "reqwest", version = "0.13.1", features = [
     "multipart",
     "stream",
