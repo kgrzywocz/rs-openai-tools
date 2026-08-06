@@ -667,6 +667,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 ## Update History
 
 <details>
+<summary>v2.0.1</summary>
+
+- Restricted the `image` dependency to the formats `Content::from_image_file` actually accepts (`png`, `jpeg`, `gif`). The default feature set pulled in AVIF encoding (`ravif` -> `rav1e` -> `bitstream-io` -> the yanked `core2`) plus a dozen unused codecs; this drops 53 transitive dependencies and shortens clean builds.
+- No public API change.
+
+</details>
+
+<details>
 <summary>v2.0.0</summary>
 
 **Breaking changes**
