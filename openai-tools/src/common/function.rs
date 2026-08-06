@@ -111,11 +111,11 @@ impl Serialize for Function {
         if let Some(parameters) = &self.parameters {
             state.serialize_field("parameters", parameters)?;
         }
-        if let Some(arguments) = &self.arguments {
-            state.serialize_field("arguments", arguments)?;
-        }
         state.serialize_field("strict", &self.strict)?;
 
+        // `function.arguments` is a JSON-encoded string in the API schema, not
+        // a nested object. Emitting it once, in that form, keeps the body valid
+        // - the API rejects request bodies with duplicate JSON keys.
         if let Some(arguments) = &self.arguments {
             if !arguments.is_empty() {
                 state.serialize_field("arguments", &serde_json::to_string(arguments).expect("Failed to serialize arguments in Function"))?;
@@ -162,5 +162,67 @@ impl<'de> Deserialize<'de> for Function {
         function.strict = map.get("strict").and_then(Value::as_bool).unwrap_or(false);
 
         Ok(function)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_json::json;
+
+    fn function_with_arguments() -> Function {
+        let mut arguments = HashMap::new();
+        arguments.insert("location".to_string(), json!("Tokyo"));
+        arguments.insert("unit".to_string(), json!("celsius"));
+        Function { name: "get_weather".to_string(), arguments: Some(arguments), ..Default::default() }
+    }
+
+    /// The OpenAI API rejects request bodies containing duplicate JSON keys, so
+    /// `arguments` must be emitted exactly once.
+    #[test]
+    fn test_arguments_serialized_only_once() {
+        let json = serde_json::to_string(&function_with_arguments()).unwrap();
+
+        let occurrences = json.matches("\"arguments\"").count();
+        assert_eq!(occurrences, 1, "`arguments` must appear exactly once, got {} in {}", occurrences, json);
+    }
+
+    /// `tool_calls[].function.arguments` is a JSON-encoded *string* in the API
+    /// schema, not a nested object.
+    #[test]
+    fn test_arguments_serialized_as_json_string() {
+        let value = serde_json::to_value(function_with_arguments()).unwrap();
+
+        let arguments = value.get("arguments").expect("arguments field is missing");
+        let encoded = arguments.as_str().expect("arguments must serialize as a JSON string");
+
+        let decoded: HashMap<String, Value> = serde_json::from_str(encoded).unwrap();
+        assert_eq!(decoded.get("location"), Some(&json!("Tokyo")));
+        assert_eq!(decoded.get("unit"), Some(&json!("celsius")));
+    }
+
+    /// A tool *definition* carries no arguments, so the field must be omitted
+    /// entirely rather than serialized as an empty string.
+    #[test]
+    fn test_tool_definition_omits_arguments() {
+        let function =
+            Function { name: "get_weather".to_string(), description: Some("Get the weather".to_string()), strict: true, ..Default::default() };
+
+        let value = serde_json::to_value(&function).unwrap();
+        assert!(value.get("arguments").is_none(), "arguments must be omitted when unset, got {}", value);
+        assert_eq!(value.get("name").and_then(Value::as_str), Some("get_weather"));
+        assert_eq!(value.get("strict").and_then(Value::as_bool), Some(true));
+    }
+
+    /// Round-trip through the wire format used by assistant tool-call messages.
+    #[test]
+    fn test_arguments_roundtrip_through_wire_format() {
+        let json = serde_json::to_string(&function_with_arguments()).unwrap();
+        let parsed: Function = serde_json::from_str(&json).unwrap();
+
+        assert_eq!(parsed.name, "get_weather");
+        let arguments = parsed.arguments.expect("arguments should survive the roundtrip");
+        assert_eq!(arguments.get("location"), Some(&json!("Tokyo")));
+        assert_eq!(arguments.get("unit"), Some(&json!("celsius")));
     }
 }
