@@ -142,6 +142,16 @@ impl ParameterSupport {
             reasoning: true,
         }
     }
+
+    /// Creates parameter support info for web-search models
+    /// (`gpt-5-search-api`, `gpt-4o-search-preview`, ...).
+    ///
+    /// These reject the whole sampling parameter set the same way reasoning
+    /// models do, but they expose no `reasoning` parameter - the API rejects
+    /// it with "Model incompatible request argument supplied".
+    pub fn search_model() -> Self {
+        Self { reasoning: false, ..Self::reasoning_model() }
+    }
 }
 
 /// Models available for Chat Completions and Responses APIs.
@@ -206,7 +216,150 @@ impl ParameterSupport {
 /// ```
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize, Default)]
 pub enum ChatModel {
-    // === GPT-5 Series (Latest Flagship) ===
+    // === GPT-5.6 Series (Latest Flagship) ===
+    /// GPT-5.6 - Alias routing to GPT-5.6 Sol
+    #[serde(rename = "gpt-5.6")]
+    Gpt5_6,
+
+    /// GPT-5.6 Sol - Frontier model for complex professional work
+    ///
+    /// - Context: 1.05M tokens, 128K max output
+    /// - Knowledge cutoff: 2026-02-16
+    /// - Supports: reasoning.effort
+    #[serde(rename = "gpt-5.6-sol")]
+    Gpt5_6Sol,
+
+    /// GPT-5.6 Terra - Balanced model for everyday work
+    ///
+    /// - Context: 1.05M tokens, 128K max output
+    /// - Supports: reasoning.effort
+    #[serde(rename = "gpt-5.6-terra")]
+    Gpt5_6Terra,
+
+    /// GPT-5.6 Luna - Most cost-efficient GPT-5.6 variant
+    ///
+    /// - Context: 1.05M tokens, 128K max output
+    /// - Supports: reasoning.effort
+    #[serde(rename = "gpt-5.6-luna")]
+    Gpt5_6Luna,
+
+    // === GPT-5.5 Series ===
+    /// GPT-5.5 - Frontier model with 1M context
+    ///
+    /// - Context: 1.05M tokens, 128K max output
+    /// - Supports: reasoning.effort (none, low, medium (default), high, xhigh)
+    #[serde(rename = "gpt-5.5")]
+    Gpt5_5,
+
+    /// GPT-5.5 Pro - Uses more compute for consistently better answers
+    ///
+    /// - Available in Responses API only (no Chat Completions)
+    /// - Supports: reasoning.effort (medium, high (default), xhigh)
+    #[serde(rename = "gpt-5.5-pro")]
+    Gpt5_5Pro,
+
+    // === GPT-5.4 Series ===
+    /// GPT-5.4 - Frontier model for complex professional work
+    ///
+    /// - Context: 1.05M tokens
+    /// - Supports: reasoning.effort (none (default), low, medium, high, xhigh)
+    #[serde(rename = "gpt-5.4")]
+    Gpt5_4,
+
+    /// GPT-5.4 Pro - Uses more compute for consistently better answers
+    ///
+    /// - Available in Responses API only (no Chat Completions)
+    /// - Supports: reasoning.effort (medium (default), high, xhigh)
+    #[serde(rename = "gpt-5.4-pro")]
+    Gpt5_4Pro,
+
+    /// GPT-5.4 Mini - Strong mini model for coding, computer use and subagents
+    ///
+    /// - Context: 400K tokens
+    /// - Supports: reasoning.effort
+    #[serde(rename = "gpt-5.4-mini")]
+    Gpt5_4Mini,
+
+    /// GPT-5.4 Nano - Cheapest GPT-5.4-class model for high-volume tasks
+    ///
+    /// - Context: 400K tokens
+    /// - Supports: reasoning.effort (none (default), low, medium, high, xhigh)
+    #[serde(rename = "gpt-5.4-nano")]
+    Gpt5_4Nano,
+
+    // === GPT-5.3 Series ===
+    /// GPT-5.3 Instant - Non-reasoning chat model
+    ///
+    /// Points to the GPT-5.3 Instant snapshot used in ChatGPT.
+    ///
+    /// **Deprecated by OpenAI** - GPT-5.6 is recommended for most API usage.
+    #[serde(rename = "gpt-5.3-chat-latest")]
+    Gpt5_3ChatLatest,
+
+    // === Codex Series (Responses API only) ===
+    /// GPT-5.3 Codex - Most capable agentic coding model
+    ///
+    /// - Available in Responses API only (no Chat Completions)
+    /// - Context: 400K tokens, 128K max output
+    /// - Supports: reasoning.effort (low, medium, high, xhigh)
+    #[serde(rename = "gpt-5.3-codex")]
+    Gpt5_3Codex,
+
+    /// GPT-5.2 Codex - GPT-5.2 optimized for agentic coding tasks
+    ///
+    /// - Available in Responses API only (no Chat Completions)
+    /// - Context: 400K tokens
+    /// - Supports: reasoning.effort (low, medium, high, xhigh)
+    #[serde(rename = "gpt-5.2-codex")]
+    Gpt5_2Codex,
+
+    /// GPT-5.1 Codex - GPT-5 optimized for agentic coding tasks
+    ///
+    /// - Available in Responses API only (no Chat Completions)
+    #[serde(rename = "gpt-5.1-codex")]
+    Gpt5_1Codex,
+
+    // === Web Search Models ===
+    /// GPT-5 Search API - GPT-5 with built-in web search
+    ///
+    /// Rejects sampling parameters and exposes no `reasoning` parameter.
+    #[serde(rename = "gpt-5-search-api")]
+    Gpt5SearchApi,
+
+    /// GPT-4o Search Preview - GPT-4o with built-in web search
+    #[serde(rename = "gpt-4o-search-preview")]
+    Gpt4oSearchPreview,
+
+    /// GPT-4o Mini Search Preview - GPT-4o Mini with built-in web search
+    #[serde(rename = "gpt-4o-mini-search-preview")]
+    Gpt4oMiniSearchPreview,
+
+    // === Audio Chat Models ===
+    /// GPT Audio - audio-capable chat model
+    ///
+    /// Requires an audio input content part or an audio output modality.
+    #[serde(rename = "gpt-audio")]
+    GptAudio,
+
+    /// GPT Audio 1.5 - newer audio-capable chat model
+    #[serde(rename = "gpt-audio-1.5")]
+    GptAudio1_5,
+
+    /// GPT Audio Mini - cost-efficient audio-capable chat model
+    #[serde(rename = "gpt-audio-mini")]
+    GptAudioMini,
+
+    // === GPT-5 Series ===
+    /// GPT-5 - Original GPT-5 flagship reasoning model
+    #[serde(rename = "gpt-5")]
+    Gpt5,
+
+    /// GPT-5 Pro - GPT-5 with more compute for difficult questions
+    ///
+    /// - Available in Responses API only (no Chat Completions)
+    #[serde(rename = "gpt-5-pro")]
+    Gpt5Pro,
+
     /// GPT-5.2 Thinking - Flagship model for coding and agentic tasks
     ///
     /// - Context: 128K tokens (256K with thinking)
@@ -217,7 +370,10 @@ pub enum ChatModel {
 
     /// GPT-5.2 Instant - Fast workhorse for everyday work
     ///
-    /// Points to the GPT-5.2 snapshot used in ChatGPT
+    /// Points to the GPT-5.2 Instant snapshot used in ChatGPT. This is a
+    /// non-reasoning model, so it accepts the full standard parameter set.
+    ///
+    /// **Deprecated by OpenAI** - GPT-5.6 is recommended for most API usage.
     #[serde(rename = "gpt-5.2-chat-latest")]
     Gpt5_2ChatLatest,
 
@@ -235,7 +391,10 @@ pub enum ChatModel {
     #[serde(rename = "gpt-5.1")]
     Gpt5_1,
 
-    /// GPT-5.1 Chat Latest - Chat-optimized GPT-5.1
+    /// GPT-5.1 Instant - Chat-optimized GPT-5.1
+    ///
+    /// Points to the GPT-5.1 Instant snapshot used in ChatGPT. This is a
+    /// non-reasoning model, so it accepts the full standard parameter set.
     #[serde(rename = "gpt-5.1-chat-latest")]
     Gpt5_1ChatLatest,
 
@@ -295,6 +454,10 @@ pub enum ChatModel {
     #[serde(rename = "gpt-3.5-turbo")]
     Gpt3_5Turbo,
 
+    /// GPT-3.5 Turbo 16K - legacy extended-context GPT-3.5 Turbo
+    #[serde(rename = "gpt-3.5-turbo-16k")]
+    Gpt3_5Turbo16k,
+
     // === Reasoning Models (o-series) ===
     /// O1 - Full reasoning model for complex tasks
     #[serde(rename = "o1")]
@@ -307,6 +470,12 @@ pub enum ChatModel {
     /// O3 - Latest full reasoning model
     #[serde(rename = "o3")]
     O3,
+
+    /// O3 Pro - O3 with more compute
+    ///
+    /// - Available in Responses API only (no Chat Completions)
+    #[serde(rename = "o3-pro")]
+    O3Pro,
 
     /// O3 Mini - Smaller, faster reasoning model
     #[serde(rename = "o3-mini")]
@@ -336,7 +505,36 @@ impl ChatModel {
     /// ```
     pub fn as_str(&self) -> &str {
         match self {
+            // GPT-5.6 Series
+            Self::Gpt5_6 => "gpt-5.6",
+            Self::Gpt5_6Sol => "gpt-5.6-sol",
+            Self::Gpt5_6Terra => "gpt-5.6-terra",
+            Self::Gpt5_6Luna => "gpt-5.6-luna",
+            // GPT-5.5 Series
+            Self::Gpt5_5 => "gpt-5.5",
+            Self::Gpt5_5Pro => "gpt-5.5-pro",
+            // GPT-5.4 Series
+            Self::Gpt5_4 => "gpt-5.4",
+            Self::Gpt5_4Pro => "gpt-5.4-pro",
+            Self::Gpt5_4Mini => "gpt-5.4-mini",
+            Self::Gpt5_4Nano => "gpt-5.4-nano",
+            // GPT-5.3 Series
+            Self::Gpt5_3ChatLatest => "gpt-5.3-chat-latest",
+            // Codex Series
+            Self::Gpt5_3Codex => "gpt-5.3-codex",
+            Self::Gpt5_2Codex => "gpt-5.2-codex",
+            Self::Gpt5_1Codex => "gpt-5.1-codex",
+            // Web Search Models
+            Self::Gpt5SearchApi => "gpt-5-search-api",
+            Self::Gpt4oSearchPreview => "gpt-4o-search-preview",
+            Self::Gpt4oMiniSearchPreview => "gpt-4o-mini-search-preview",
+            // Audio Chat Models
+            Self::GptAudio => "gpt-audio",
+            Self::GptAudio1_5 => "gpt-audio-1.5",
+            Self::GptAudioMini => "gpt-audio-mini",
             // GPT-5 Series
+            Self::Gpt5 => "gpt-5",
+            Self::Gpt5Pro => "gpt-5-pro",
             Self::Gpt5_2 => "gpt-5.2",
             Self::Gpt5_2ChatLatest => "gpt-5.2-chat-latest",
             Self::Gpt5_2Pro => "gpt-5.2-pro",
@@ -358,10 +556,12 @@ impl ChatModel {
             Self::Gpt4 => "gpt-4",
             // GPT-3.5 Series
             Self::Gpt3_5Turbo => "gpt-3.5-turbo",
+            Self::Gpt3_5Turbo16k => "gpt-3.5-turbo-16k",
             // Reasoning Models
             Self::O1 => "o1",
             Self::O1Pro => "o1-pro",
             Self::O3 => "o3",
+            Self::O3Pro => "o3-pro",
             Self::O3Mini => "o3-mini",
             Self::O4Mini => "o4-mini",
             // Custom
@@ -390,16 +590,48 @@ impl ChatModel {
     pub fn is_reasoning_model(&self) -> bool {
         matches!(
             self,
-            // GPT-5 series are reasoning models
-            Self::Gpt5_2 | Self::Gpt5_2ChatLatest | Self::Gpt5_2Pro |
-            Self::Gpt5_1 | Self::Gpt5_1ChatLatest | Self::Gpt5_1CodexMax |
-            Self::Gpt5Mini | Self::Gpt5Nano |
+            // GPT-5.6 series
+            Self::Gpt5_6 | Self::Gpt5_6Sol | Self::Gpt5_6Terra | Self::Gpt5_6Luna |
+            // GPT-5.5 series
+            Self::Gpt5_5 | Self::Gpt5_5Pro |
+            // GPT-5.4 series
+            Self::Gpt5_4 | Self::Gpt5_4Pro | Self::Gpt5_4Mini | Self::Gpt5_4Nano |
+            // Codex series
+            Self::Gpt5_3Codex | Self::Gpt5_2Codex | Self::Gpt5_1Codex | Self::Gpt5_1CodexMax |
+            // GPT-5 series
+            Self::Gpt5 | Self::Gpt5Pro | Self::Gpt5_2 | Self::Gpt5_2Pro | Self::Gpt5_1 | Self::Gpt5Mini | Self::Gpt5Nano |
             // O-series reasoning models
-            Self::O1 | Self::O1Pro | Self::O3 | Self::O3Mini | Self::O4Mini
+            Self::O1 | Self::O1Pro | Self::O3 | Self::O3Pro | Self::O3Mini | Self::O4Mini
         ) || matches!(
             self,
-            Self::Custom(s) if s.starts_with("gpt-5") || s.starts_with("o1") || s.starts_with("o3") || s.starts_with("o4")
+            // The `*-chat-latest` aliases point at the non-reasoning "Instant"
+            // snapshots, and the search models expose no `reasoning` parameter,
+            // so neither must be caught by the prefix heuristic.
+            Self::Custom(s) if !s.ends_with("-chat-latest")
+                && !s.contains("-search")
+                && (s.starts_with("gpt-5") || s.starts_with("o1") || s.starts_with("o3") || s.starts_with("o4"))
         )
+    }
+
+    /// Checks if this is a web-search model.
+    ///
+    /// Search models (`gpt-5-search-api`, `gpt-4o-search-preview`,
+    /// `gpt-4o-mini-search-preview`) reject the whole sampling parameter set -
+    /// `temperature`, `top_p`, `n`, `logprobs` and the penalties - but unlike
+    /// reasoning models they expose no `reasoning` parameter.
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// use openai_tools::common::models::ChatModel;
+    ///
+    /// assert!(ChatModel::Gpt4oSearchPreview.is_search_model());
+    /// assert!(!ChatModel::Gpt4oSearchPreview.is_reasoning_model());
+    /// assert!(!ChatModel::Gpt4oMini.is_search_model());
+    /// ```
+    pub fn is_search_model(&self) -> bool {
+        matches!(self, Self::Gpt5SearchApi | Self::Gpt4oSearchPreview | Self::Gpt4oMiniSearchPreview)
+            || matches!(self, Self::Custom(s) if s.contains("-search"))
     }
 
     /// Returns parameter support information for this model.
@@ -426,7 +658,9 @@ impl ChatModel {
     /// assert!(support.reasoning);
     /// ```
     pub fn parameter_support(&self) -> ParameterSupport {
-        if self.is_reasoning_model() {
+        if self.is_search_model() {
+            ParameterSupport::search_model()
+        } else if self.is_reasoning_model() {
             ParameterSupport::reasoning_model()
         } else {
             ParameterSupport::standard_model()
@@ -459,7 +693,36 @@ impl std::fmt::Display for ChatModel {
 impl From<&str> for ChatModel {
     fn from(s: &str) -> Self {
         match s {
+            // GPT-5.6 Series
+            "gpt-5.6" => Self::Gpt5_6,
+            "gpt-5.6-sol" => Self::Gpt5_6Sol,
+            "gpt-5.6-terra" => Self::Gpt5_6Terra,
+            "gpt-5.6-luna" => Self::Gpt5_6Luna,
+            // GPT-5.5 Series
+            "gpt-5.5" => Self::Gpt5_5,
+            "gpt-5.5-pro" => Self::Gpt5_5Pro,
+            // GPT-5.4 Series
+            "gpt-5.4" => Self::Gpt5_4,
+            "gpt-5.4-pro" => Self::Gpt5_4Pro,
+            "gpt-5.4-mini" => Self::Gpt5_4Mini,
+            "gpt-5.4-nano" => Self::Gpt5_4Nano,
+            // GPT-5.3 Series
+            "gpt-5.3-chat-latest" => Self::Gpt5_3ChatLatest,
+            // Codex Series
+            "gpt-5.3-codex" => Self::Gpt5_3Codex,
+            "gpt-5.2-codex" => Self::Gpt5_2Codex,
+            "gpt-5.1-codex" => Self::Gpt5_1Codex,
+            // Web Search Models
+            "gpt-5-search-api" => Self::Gpt5SearchApi,
+            "gpt-4o-search-preview" => Self::Gpt4oSearchPreview,
+            "gpt-4o-mini-search-preview" => Self::Gpt4oMiniSearchPreview,
+            // Audio Chat Models
+            "gpt-audio" => Self::GptAudio,
+            "gpt-audio-1.5" => Self::GptAudio1_5,
+            "gpt-audio-mini" => Self::GptAudioMini,
             // GPT-5 Series
+            "gpt-5" => Self::Gpt5,
+            "gpt-5-pro" => Self::Gpt5Pro,
             "gpt-5.2" => Self::Gpt5_2,
             "gpt-5.2-chat-latest" => Self::Gpt5_2ChatLatest,
             "gpt-5.2-pro" => Self::Gpt5_2Pro,
@@ -481,10 +744,12 @@ impl From<&str> for ChatModel {
             "gpt-4" => Self::Gpt4,
             // GPT-3.5 Series
             "gpt-3.5-turbo" => Self::Gpt3_5Turbo,
+            "gpt-3.5-turbo-16k" => Self::Gpt3_5Turbo16k,
             // Reasoning Models
             "o1" => Self::O1,
             "o1-pro" => Self::O1Pro,
             "o3" => Self::O3,
+            "o3-pro" => Self::O3Pro,
             "o3-mini" => Self::O3Mini,
             "o4-mini" => Self::O4Mini,
             // Custom
@@ -623,7 +888,45 @@ impl From<&str> for EmbeddingModel {
 #[allow(non_camel_case_types)]
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize, Default)]
 pub enum RealtimeModel {
-    /// gpt-realtime-2025-08-28 - GPT Realtime model
+    /// gpt-realtime-2.1 - Reasoning speech-to-speech model with tool use
+    ///
+    /// - Context: 128K tokens, 32K max output
+    /// - Improved alphanumeric recognition, silence/noise handling and
+    ///   interruption behavior
+    #[serde(rename = "gpt-realtime-2.1")]
+    GptRealtime2_1,
+
+    /// gpt-realtime-2.1-mini - Smaller, cheaper gpt-realtime-2.1
+    #[serde(rename = "gpt-realtime-2.1-mini")]
+    GptRealtime2_1Mini,
+
+    /// gpt-realtime-2 - Previous generation realtime voice model
+    #[serde(rename = "gpt-realtime-2")]
+    GptRealtime2,
+
+    /// gpt-realtime - Alias tracking the current realtime voice model
+    #[serde(rename = "gpt-realtime")]
+    GptRealtime,
+
+    /// gpt-realtime-mini - Cost-efficient realtime voice model
+    #[serde(rename = "gpt-realtime-mini")]
+    GptRealtimeMini,
+
+    /// gpt-realtime-1.5 - Earlier realtime voice model
+    #[serde(rename = "gpt-realtime-1.5")]
+    GptRealtime1_5,
+
+    /// gpt-realtime-translate - Streaming speech-to-speech translation
+    ///
+    /// Uses the `v1/realtime/translations` endpoint rather than `v1/realtime`.
+    #[serde(rename = "gpt-realtime-translate")]
+    GptRealtimeTranslate,
+
+    /// gpt-realtime-2025-08-28 - GPT Realtime model (default)
+    ///
+    /// Kept as the default so that existing callers of `RealtimeClient::new()`
+    /// keep reaching the same model. Select a newer model explicitly with
+    /// [`RealtimeClient::model`](crate::realtime::RealtimeClient::model).
     #[serde(rename = "gpt-realtime-2025-08-28")]
     #[default]
     GptRealtime_2025_08_28,
@@ -637,6 +940,13 @@ impl RealtimeModel {
     /// Returns the model identifier string for API requests.
     pub fn as_str(&self) -> &str {
         match self {
+            Self::GptRealtime2_1 => "gpt-realtime-2.1",
+            Self::GptRealtime2_1Mini => "gpt-realtime-2.1-mini",
+            Self::GptRealtime2 => "gpt-realtime-2",
+            Self::GptRealtime => "gpt-realtime",
+            Self::GptRealtimeMini => "gpt-realtime-mini",
+            Self::GptRealtime1_5 => "gpt-realtime-1.5",
+            Self::GptRealtimeTranslate => "gpt-realtime-translate",
             Self::GptRealtime_2025_08_28 => "gpt-realtime-2025-08-28",
             Self::Custom(s) => s.as_str(),
         }
@@ -657,6 +967,13 @@ impl std::fmt::Display for RealtimeModel {
 impl From<&str> for RealtimeModel {
     fn from(s: &str) -> Self {
         match s {
+            "gpt-realtime-2.1" => Self::GptRealtime2_1,
+            "gpt-realtime-2.1-mini" => Self::GptRealtime2_1Mini,
+            "gpt-realtime-2" => Self::GptRealtime2,
+            "gpt-realtime" => Self::GptRealtime,
+            "gpt-realtime-mini" => Self::GptRealtimeMini,
+            "gpt-realtime-1.5" => Self::GptRealtime1_5,
+            "gpt-realtime-translate" => Self::GptRealtimeTranslate,
             "gpt-realtime-2025-08-28" => Self::GptRealtime_2025_08_28,
             other => Self::Custom(other.to_string()),
         }
@@ -745,6 +1062,14 @@ pub enum FineTuningModel {
     /// gpt-3.5-turbo-0613 - GPT-3.5 Turbo (legacy)
     #[serde(rename = "gpt-3.5-turbo-0613")]
     Gpt35Turbo_0613,
+
+    /// babbage-002 - Legacy base model for fine-tuning
+    #[serde(rename = "babbage-002")]
+    Babbage002,
+
+    /// davinci-002 - Legacy base model for fine-tuning
+    #[serde(rename = "davinci-002")]
+    Davinci002,
 }
 
 impl FineTuningModel {
@@ -764,6 +1089,8 @@ impl FineTuningModel {
             Self::Gpt35Turbo_0125 => "gpt-3.5-turbo-0125",
             Self::Gpt35Turbo_1106 => "gpt-3.5-turbo-1106",
             Self::Gpt35Turbo_0613 => "gpt-3.5-turbo-0613",
+            Self::Babbage002 => "babbage-002",
+            Self::Davinci002 => "davinci-002",
         }
     }
 }
@@ -799,9 +1126,10 @@ mod tests {
         assert!(ChatModel::O3.is_reasoning_model());
         assert!(ChatModel::O3Mini.is_reasoning_model());
         assert!(ChatModel::O4Mini.is_reasoning_model());
-        // GPT-5 series are also reasoning models
+        // GPT-5 series are also reasoning models, except the `*-chat-latest`
+        // aliases, which point at the non-reasoning Instant snapshots.
         assert!(ChatModel::Gpt5_2.is_reasoning_model());
-        assert!(ChatModel::Gpt5_2ChatLatest.is_reasoning_model());
+        assert!(!ChatModel::Gpt5_2ChatLatest.is_reasoning_model());
         assert!(ChatModel::Gpt5_2Pro.is_reasoning_model());
         assert!(ChatModel::Gpt5_1.is_reasoning_model());
         assert!(ChatModel::Gpt5_1CodexMax.is_reasoning_model());
@@ -937,17 +1265,11 @@ mod tests {
 
     #[test]
     fn test_all_gpt5_models_are_reasoning() {
-        // All GPT-5 series models should be detected as reasoning models
-        let gpt5_series = vec![
-            ChatModel::Gpt5_2,
-            ChatModel::Gpt5_2ChatLatest,
-            ChatModel::Gpt5_2Pro,
-            ChatModel::Gpt5_1,
-            ChatModel::Gpt5_1ChatLatest,
-            ChatModel::Gpt5_1CodexMax,
-            ChatModel::Gpt5Mini,
-            ChatModel::Gpt5Nano,
-        ];
+        // All GPT-5 series models should be detected as reasoning models,
+        // except the `*-chat-latest` aliases (covered separately by
+        // `test_chat_latest_models_are_not_reasoning_models`).
+        let gpt5_series =
+            vec![ChatModel::Gpt5_2, ChatModel::Gpt5_2Pro, ChatModel::Gpt5_1, ChatModel::Gpt5_1CodexMax, ChatModel::Gpt5Mini, ChatModel::Gpt5Nano];
 
         for model in gpt5_series {
             assert!(model.is_reasoning_model(), "Expected {} to be a reasoning model", model.as_str());
@@ -1070,16 +1392,10 @@ mod tests {
 
     #[test]
     fn test_parameter_support_all_gpt5_series() {
-        let gpt5_series = vec![
-            ChatModel::Gpt5_2,
-            ChatModel::Gpt5_2ChatLatest,
-            ChatModel::Gpt5_2Pro,
-            ChatModel::Gpt5_1,
-            ChatModel::Gpt5_1ChatLatest,
-            ChatModel::Gpt5_1CodexMax,
-            ChatModel::Gpt5Mini,
-            ChatModel::Gpt5Nano,
-        ];
+        // The `*-chat-latest` aliases are excluded: they are non-reasoning
+        // models and accept the full standard parameter set.
+        let gpt5_series =
+            vec![ChatModel::Gpt5_2, ChatModel::Gpt5_2Pro, ChatModel::Gpt5_1, ChatModel::Gpt5_1CodexMax, ChatModel::Gpt5Mini, ChatModel::Gpt5Nano];
 
         for model in gpt5_series {
             let support = model.parameter_support();
@@ -1270,6 +1586,281 @@ mod tests {
             let json = serde_json::to_string(&model).unwrap();
             let deserialized: FineTuningModel = serde_json::from_str(&json).unwrap();
             assert_eq!(deserialized, model, "Serialization roundtrip failed for {:?}", model);
+        }
+    }
+
+    // ========================================================================
+    // GPT-5.3 / 5.4 / 5.5 / 5.6 series and Codex models
+    //
+    // Model IDs and capabilities verified against the OpenAI API reference
+    // (https://developers.openai.com/api/docs/models), August 2026.
+    // ========================================================================
+
+    /// Every model ID added for the GPT-5.3 through GPT-5.6 generations, paired
+    /// with the exact string the API expects.
+    fn gpt5_3_to_5_6_models() -> Vec<(ChatModel, &'static str)> {
+        vec![
+            // GPT-5.6 series: `gpt-5.6` is a documented alias routing to Sol.
+            (ChatModel::Gpt5_6, "gpt-5.6"),
+            (ChatModel::Gpt5_6Sol, "gpt-5.6-sol"),
+            (ChatModel::Gpt5_6Terra, "gpt-5.6-terra"),
+            (ChatModel::Gpt5_6Luna, "gpt-5.6-luna"),
+            // GPT-5.5 series
+            (ChatModel::Gpt5_5, "gpt-5.5"),
+            (ChatModel::Gpt5_5Pro, "gpt-5.5-pro"),
+            // GPT-5.4 series
+            (ChatModel::Gpt5_4, "gpt-5.4"),
+            (ChatModel::Gpt5_4Pro, "gpt-5.4-pro"),
+            (ChatModel::Gpt5_4Mini, "gpt-5.4-mini"),
+            (ChatModel::Gpt5_4Nano, "gpt-5.4-nano"),
+            // GPT-5.3 series
+            (ChatModel::Gpt5_3ChatLatest, "gpt-5.3-chat-latest"),
+            // Codex series
+            (ChatModel::Gpt5_3Codex, "gpt-5.3-codex"),
+            (ChatModel::Gpt5_2Codex, "gpt-5.2-codex"),
+            (ChatModel::Gpt5_1Codex, "gpt-5.1-codex"),
+        ]
+    }
+
+    #[test]
+    fn test_new_chat_models_as_str() {
+        for (model, expected) in gpt5_3_to_5_6_models() {
+            assert_eq!(model.as_str(), expected, "Wrong model ID for {:?}", model);
+        }
+    }
+
+    #[test]
+    fn test_new_chat_models_from_str_roundtrip() {
+        for (model, model_str) in gpt5_3_to_5_6_models() {
+            assert_eq!(ChatModel::from(model_str), model, "Failed to parse {}", model_str);
+            // A known model must never fall through to Custom.
+            assert_eq!(ChatModel::from(model_str).as_str(), model_str, "Roundtrip failed for {}", model_str);
+        }
+    }
+
+    #[test]
+    fn test_new_chat_models_serialization_roundtrip() {
+        for (model, model_str) in gpt5_3_to_5_6_models() {
+            let json = serde_json::to_string(&model).unwrap();
+            assert_eq!(json, format!("\"{}\"", model_str), "Wrong serialization for {:?}", model);
+            let deserialized: ChatModel = serde_json::from_str(&json).unwrap();
+            assert_eq!(deserialized, model, "Serialization roundtrip failed for {:?}", model);
+        }
+    }
+
+    /// Every GPT-5.4/5.5/5.6 and Codex model documents "reasoning token
+    /// support", so they carry the reasoning-model parameter restrictions.
+    #[test]
+    fn test_new_gpt5_models_are_reasoning_models() {
+        let reasoning = vec![
+            ChatModel::Gpt5_6,
+            ChatModel::Gpt5_6Sol,
+            ChatModel::Gpt5_6Terra,
+            ChatModel::Gpt5_6Luna,
+            ChatModel::Gpt5_5,
+            ChatModel::Gpt5_5Pro,
+            ChatModel::Gpt5_4,
+            ChatModel::Gpt5_4Pro,
+            ChatModel::Gpt5_4Mini,
+            ChatModel::Gpt5_4Nano,
+            ChatModel::Gpt5_3Codex,
+            ChatModel::Gpt5_2Codex,
+            ChatModel::Gpt5_1Codex,
+        ];
+
+        for model in reasoning {
+            assert!(model.is_reasoning_model(), "Expected {} to be a reasoning model", model.as_str());
+            let support = model.parameter_support();
+            assert_eq!(support.temperature, ParameterRestriction::FixedValue(1.0), "{} should pin temperature to 1.0", model.as_str());
+            assert!(support.reasoning, "{} should support the reasoning parameter", model.as_str());
+        }
+    }
+
+    /// The `*-chat-latest` models point at the non-reasoning "Instant"
+    /// snapshots used in ChatGPT. The API reference lists no reasoning token
+    /// support for them, so they accept the full standard parameter set.
+    #[test]
+    fn test_chat_latest_models_are_not_reasoning_models() {
+        let chat_latest = vec![ChatModel::Gpt5_3ChatLatest, ChatModel::Gpt5_2ChatLatest, ChatModel::Gpt5_1ChatLatest];
+
+        for model in chat_latest {
+            assert!(!model.is_reasoning_model(), "Expected {} to NOT be a reasoning model", model.as_str());
+            let support = model.parameter_support();
+            assert_eq!(support.temperature, ParameterRestriction::Any, "{} should accept any temperature", model.as_str());
+            assert_eq!(support.top_p, ParameterRestriction::Any, "{} should accept any top_p", model.as_str());
+            assert!(!support.reasoning, "{} should NOT support the reasoning parameter", model.as_str());
+        }
+    }
+
+    /// The `Custom` fallback infers reasoning support from the model ID prefix.
+    /// A future `gpt-5.x-chat-latest` must not be caught by that heuristic.
+    #[test]
+    fn test_custom_chat_latest_is_not_reasoning_model() {
+        assert!(!ChatModel::custom("gpt-5.7-chat-latest").is_reasoning_model());
+        // Unknown GPT-5 models still default to the reasoning restrictions.
+        assert!(ChatModel::custom("gpt-5.7").is_reasoning_model());
+        assert!(ChatModel::custom("gpt-5.7-codex").is_reasoning_model());
+    }
+
+    // ========================================================================
+    // Realtime models
+    // ========================================================================
+
+    fn new_realtime_models() -> Vec<(RealtimeModel, &'static str)> {
+        vec![
+            (RealtimeModel::GptRealtime2_1, "gpt-realtime-2.1"),
+            (RealtimeModel::GptRealtime2_1Mini, "gpt-realtime-2.1-mini"),
+            (RealtimeModel::GptRealtime2, "gpt-realtime-2"),
+            (RealtimeModel::GptRealtime1_5, "gpt-realtime-1.5"),
+            (RealtimeModel::GptRealtimeTranslate, "gpt-realtime-translate"),
+        ]
+    }
+
+    #[test]
+    fn test_new_realtime_models_as_str() {
+        for (model, expected) in new_realtime_models() {
+            assert_eq!(model.as_str(), expected, "Wrong model ID for {:?}", model);
+        }
+    }
+
+    #[test]
+    fn test_new_realtime_models_from_str_roundtrip() {
+        for (model, model_str) in new_realtime_models() {
+            assert_eq!(RealtimeModel::from(model_str), model, "Failed to parse {}", model_str);
+        }
+    }
+
+    /// `RealtimeClient::new()` picks up `RealtimeModel::default()`, so the
+    /// default must not drift when new models are added - that would silently
+    /// change which model existing callers connect to.
+    #[test]
+    fn test_realtime_model_default_is_unchanged() {
+        assert_eq!(RealtimeModel::default(), RealtimeModel::GptRealtime_2025_08_28);
+    }
+
+    #[test]
+    fn test_new_realtime_models_serialization_roundtrip() {
+        for (model, model_str) in new_realtime_models() {
+            let json = serde_json::to_string(&model).unwrap();
+            assert_eq!(json, format!("\"{}\"", model_str), "Wrong serialization for {:?}", model);
+            let deserialized: RealtimeModel = serde_json::from_str(&json).unwrap();
+            assert_eq!(deserialized, model, "Serialization roundtrip failed for {:?}", model);
+        }
+    }
+
+    // ========================================================================
+    // Models present in the live /v1/models listing but previously missing
+    // from the enums. Classification verified empirically against the API
+    // (August 2026): reasoning models reject `temperature`, search models
+    // reject the whole sampling parameter set but expose no `reasoning` param.
+    // ========================================================================
+
+    fn previously_missing_chat_models() -> Vec<(ChatModel, &'static str)> {
+        vec![
+            (ChatModel::Gpt5, "gpt-5"),
+            (ChatModel::Gpt5Pro, "gpt-5-pro"),
+            (ChatModel::O3Pro, "o3-pro"),
+            (ChatModel::Gpt5SearchApi, "gpt-5-search-api"),
+            (ChatModel::Gpt4oSearchPreview, "gpt-4o-search-preview"),
+            (ChatModel::Gpt4oMiniSearchPreview, "gpt-4o-mini-search-preview"),
+            (ChatModel::GptAudio, "gpt-audio"),
+            (ChatModel::GptAudio1_5, "gpt-audio-1.5"),
+            (ChatModel::GptAudioMini, "gpt-audio-mini"),
+            (ChatModel::Gpt3_5Turbo16k, "gpt-3.5-turbo-16k"),
+        ]
+    }
+
+    #[test]
+    fn test_previously_missing_chat_models_as_str() {
+        for (model, expected) in previously_missing_chat_models() {
+            assert_eq!(model.as_str(), expected, "Wrong model ID for {:?}", model);
+        }
+    }
+
+    #[test]
+    fn test_previously_missing_chat_models_from_str_roundtrip() {
+        for (model, model_str) in previously_missing_chat_models() {
+            assert_eq!(ChatModel::from(model_str), model, "Failed to parse {}", model_str);
+            assert_eq!(ChatModel::from(model_str).as_str(), model_str, "Roundtrip failed for {}", model_str);
+        }
+    }
+
+    #[test]
+    fn test_previously_missing_chat_models_serialization_roundtrip() {
+        for (model, model_str) in previously_missing_chat_models() {
+            let json = serde_json::to_string(&model).unwrap();
+            assert_eq!(json, format!("\"{}\"", model_str), "Wrong serialization for {:?}", model);
+            let deserialized: ChatModel = serde_json::from_str(&json).unwrap();
+            assert_eq!(deserialized, model, "Serialization roundtrip failed for {:?}", model);
+        }
+    }
+
+    /// `gpt-5`, `gpt-5-pro` and `o3-pro` reject `temperature`, so they carry
+    /// the reasoning restrictions.
+    #[test]
+    fn test_gpt5_base_and_pro_models_are_reasoning() {
+        for model in [ChatModel::Gpt5, ChatModel::Gpt5Pro, ChatModel::O3Pro] {
+            assert!(model.is_reasoning_model(), "Expected {} to be a reasoning model", model.as_str());
+            assert!(model.parameter_support().reasoning, "{} should support the reasoning parameter", model.as_str());
+        }
+    }
+
+    /// The audio chat models accept the standard sampling parameters.
+    #[test]
+    fn test_audio_chat_models_are_standard() {
+        for model in [ChatModel::GptAudio, ChatModel::GptAudio1_5, ChatModel::GptAudioMini, ChatModel::Gpt3_5Turbo16k] {
+            assert!(!model.is_reasoning_model(), "Expected {} to NOT be a reasoning model", model.as_str());
+            let support = model.parameter_support();
+            assert_eq!(support.temperature, ParameterRestriction::Any, "{} should accept any temperature", model.as_str());
+            assert!(support.n_multiple, "{} should support n > 1", model.as_str());
+        }
+    }
+
+    /// Search models reject temperature/top_p/n/logprobs/penalties, but they
+    /// are NOT reasoning models - they expose no `reasoning` parameter.
+    #[test]
+    fn test_search_models_reject_sampling_but_have_no_reasoning() {
+        let search_models = [ChatModel::Gpt5SearchApi, ChatModel::Gpt4oSearchPreview, ChatModel::Gpt4oMiniSearchPreview];
+
+        for model in search_models {
+            assert!(model.is_search_model(), "Expected {} to be a search model", model.as_str());
+            assert!(!model.is_reasoning_model(), "Search model {} must not be classed as reasoning", model.as_str());
+
+            let support = model.parameter_support();
+            assert_eq!(support.temperature, ParameterRestriction::FixedValue(1.0), "{} should reject custom temperature", model.as_str());
+            assert_eq!(support.top_p, ParameterRestriction::FixedValue(1.0), "{} should reject custom top_p", model.as_str());
+            assert_eq!(support.frequency_penalty, ParameterRestriction::FixedValue(0.0), "{} should reject frequency_penalty", model.as_str());
+            assert_eq!(support.presence_penalty, ParameterRestriction::FixedValue(0.0), "{} should reject presence_penalty", model.as_str());
+            assert!(!support.logprobs, "{} should reject logprobs", model.as_str());
+            assert!(!support.n_multiple, "{} should reject n > 1", model.as_str());
+            assert!(!support.reasoning, "{} exposes no reasoning parameter", model.as_str());
+        }
+    }
+
+    /// Non-search models must not be caught by the search classification.
+    #[test]
+    fn test_non_search_models_are_not_search_models() {
+        for model in [ChatModel::Gpt5_6Sol, ChatModel::Gpt4oMini, ChatModel::O3Mini, ChatModel::Gpt5_2ChatLatest] {
+            assert!(!model.is_search_model(), "Expected {} to NOT be a search model", model.as_str());
+        }
+    }
+
+    #[test]
+    fn test_previously_missing_realtime_models() {
+        for (model, expected) in [(RealtimeModel::GptRealtime, "gpt-realtime"), (RealtimeModel::GptRealtimeMini, "gpt-realtime-mini")] {
+            assert_eq!(model.as_str(), expected, "Wrong model ID for {:?}", model);
+            assert_eq!(RealtimeModel::from(expected), model, "Failed to parse {}", expected);
+            let json = serde_json::to_string(&model).unwrap();
+            assert_eq!(json, format!("\"{}\"", expected), "Wrong serialization for {:?}", model);
+        }
+    }
+
+    #[test]
+    fn test_legacy_fine_tuning_base_models() {
+        for (model, expected) in [(FineTuningModel::Babbage002, "babbage-002"), (FineTuningModel::Davinci002, "davinci-002")] {
+            assert_eq!(model.as_str(), expected, "Wrong model ID for {:?}", model);
+            let json = serde_json::to_string(&model).unwrap();
+            assert_eq!(json, format!("\"{}\"", expected), "Wrong serialization for {:?}", model);
         }
     }
 }

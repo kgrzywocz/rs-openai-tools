@@ -1626,11 +1626,16 @@ mod tests {
     }
 
     #[test]
-    fn test_gpt5_2_chat_latest_ignores_n_greater_than_1() {
+    /// `gpt-5.2-chat-latest` points at the non-reasoning Instant snapshot, so
+    /// it accepts the standard parameters that the reasoning models reject.
+    fn test_gpt5_2_chat_latest_honors_n_greater_than_1() {
         let mut chat = ChatCompletion::test_new_with_model(ChatModel::Gpt5_2ChatLatest);
 
         chat.n(5);
-        assert_eq!(chat.request_body.n, None);
+        assert_eq!(chat.request_body.n, Some(5));
+
+        chat.temperature(0.3);
+        assert_eq!(chat.request_body.temperature, Some(0.3));
     }
 
     // =============================================================================

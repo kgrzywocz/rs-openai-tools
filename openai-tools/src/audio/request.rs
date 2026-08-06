@@ -52,6 +52,12 @@ pub enum TtsModel {
     /// GPT-4o Mini TTS model
     #[serde(rename = "gpt-4o-mini-tts")]
     Gpt4oMiniTts,
+    /// tts-1-1106 - dated snapshot of the standard TTS model
+    #[serde(rename = "tts-1-1106")]
+    Tts1_1106,
+    /// tts-1-hd-1106 - dated snapshot of the HD TTS model
+    #[serde(rename = "tts-1-hd-1106")]
+    Tts1Hd1106,
 }
 
 impl TtsModel {
@@ -61,6 +67,8 @@ impl TtsModel {
             Self::Tts1 => "tts-1",
             Self::Tts1Hd => "tts-1-hd",
             Self::Gpt4oMiniTts => "gpt-4o-mini-tts",
+            Self::Tts1_1106 => "tts-1-1106",
+            Self::Tts1Hd1106 => "tts-1-hd-1106",
         }
     }
 
@@ -203,6 +211,27 @@ pub enum SttModel {
     /// GPT-4o Transcribe model
     #[serde(rename = "gpt-4o-transcribe")]
     Gpt4oTranscribe,
+    /// GPT-4o Mini Transcribe - cheaper GPT-4o Transcribe
+    #[serde(rename = "gpt-4o-mini-transcribe")]
+    Gpt4oMiniTranscribe,
+    /// GPT-4o Transcribe Diarize - transcription with speaker diarization
+    #[serde(rename = "gpt-4o-transcribe-diarize")]
+    Gpt4oTranscribeDiarize,
+    /// GPT Transcribe - high-accuracy speech-to-text for file and realtime input
+    #[serde(rename = "gpt-transcribe")]
+    GptTranscribe,
+    /// GPT Live Transcribe - low-latency streaming transcript deltas
+    ///
+    /// Realtime transcription sessions only; not available on
+    /// `/v1/audio/transcriptions`.
+    #[serde(rename = "gpt-live-transcribe")]
+    GptLiveTranscribe,
+    /// GPT Realtime Whisper - Whisper for realtime transcription sessions
+    ///
+    /// Realtime transcription sessions only; not available on
+    /// `/v1/audio/transcriptions`.
+    #[serde(rename = "gpt-realtime-whisper")]
+    GptRealtimeWhisper,
 }
 
 impl SttModel {
@@ -211,7 +240,23 @@ impl SttModel {
         match self {
             Self::Whisper1 => "whisper-1",
             Self::Gpt4oTranscribe => "gpt-4o-transcribe",
+            Self::Gpt4oMiniTranscribe => "gpt-4o-mini-transcribe",
+            Self::Gpt4oTranscribeDiarize => "gpt-4o-transcribe-diarize",
+            Self::GptTranscribe => "gpt-transcribe",
+            Self::GptLiveTranscribe => "gpt-live-transcribe",
+            Self::GptRealtimeWhisper => "gpt-realtime-whisper",
         }
+    }
+
+    /// Returns `true` if the model can transcribe uploaded files via
+    /// `/v1/audio/transcriptions`.
+    ///
+    /// [`GptLiveTranscribe`](Self::GptLiveTranscribe) and
+    /// [`GptRealtimeWhisper`](Self::GptRealtimeWhisper) are exposed only on
+    /// `/v1/realtime/transcription_sessions`, so passing them to
+    /// [`Audio::transcribe`] would be rejected by the API.
+    pub fn supports_file_transcription(&self) -> bool {
+        !matches!(self, Self::GptLiveTranscribe | Self::GptRealtimeWhisper)
     }
 }
 
@@ -991,5 +1036,68 @@ mod tests {
     fn test_timestamp_granularity_as_str() {
         assert_eq!(TimestampGranularity::Word.as_str(), "word");
         assert_eq!(TimestampGranularity::Segment.as_str(), "segment");
+    }
+
+    // =========================================================================
+    // Speech-to-text models added in 2026.
+    //
+    // Model IDs verified against the OpenAI API reference
+    // (https://developers.openai.com/api/docs/models), August 2026.
+    // =========================================================================
+
+    fn new_stt_models() -> Vec<(SttModel, &'static str)> {
+        vec![
+            (SttModel::GptTranscribe, "gpt-transcribe"),
+            (SttModel::GptLiveTranscribe, "gpt-live-transcribe"),
+            (SttModel::GptRealtimeWhisper, "gpt-realtime-whisper"),
+            (SttModel::Gpt4oMiniTranscribe, "gpt-4o-mini-transcribe"),
+        ]
+    }
+
+    #[test]
+    fn test_new_stt_models_as_str() {
+        for (model, expected) in new_stt_models() {
+            assert_eq!(model.as_str(), expected, "Wrong model ID for {:?}", model);
+        }
+    }
+
+    #[test]
+    fn test_new_stt_models_serialization() {
+        for (model, expected) in new_stt_models() {
+            let json = serde_json::to_string(&model).unwrap();
+            assert_eq!(json, format!("\"{}\"", expected), "Wrong serialization for {:?}", model);
+            let deserialized: SttModel = serde_json::from_str(&json).unwrap();
+            assert_eq!(deserialized, model, "Serialization roundtrip failed for {:?}", model);
+        }
+    }
+
+    /// `gpt-live-transcribe` and `gpt-realtime-whisper` are only exposed on
+    /// `v1/realtime/transcription_sessions`, not on `v1/audio/transcriptions`.
+    #[test]
+    fn test_realtime_only_stt_models_are_flagged() {
+        assert!(!SttModel::GptLiveTranscribe.supports_file_transcription());
+        assert!(!SttModel::GptRealtimeWhisper.supports_file_transcription());
+
+        assert!(SttModel::GptTranscribe.supports_file_transcription());
+        assert!(SttModel::Whisper1.supports_file_transcription());
+        assert!(SttModel::Gpt4oTranscribe.supports_file_transcription());
+        assert!(SttModel::Gpt4oMiniTranscribe.supports_file_transcription());
+    }
+
+    /// Audio models present in the live /v1/models listing but previously
+    /// missing from the enums. Verified live against the API (August 2026).
+    #[test]
+    fn test_previously_missing_tts_models() {
+        for (model, expected) in [(TtsModel::Tts1_1106, "tts-1-1106"), (TtsModel::Tts1Hd1106, "tts-1-hd-1106")] {
+            assert_eq!(model.as_str(), expected, "Wrong model ID for {:?}", model);
+            let json = serde_json::to_string(&model).unwrap();
+            assert_eq!(json, format!("\"{}\"", expected), "Wrong serialization for {:?}", model);
+        }
+    }
+
+    #[test]
+    fn test_diarizing_stt_model() {
+        assert_eq!(SttModel::Gpt4oTranscribeDiarize.as_str(), "gpt-4o-transcribe-diarize");
+        assert!(SttModel::Gpt4oTranscribeDiarize.supports_file_transcription());
     }
 }
