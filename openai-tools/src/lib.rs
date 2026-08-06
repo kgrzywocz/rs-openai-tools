@@ -261,13 +261,17 @@
 //!   - [`embedding::response`] - Vector response types
 //!
 //! - [`realtime`] - Realtime API (WebSocket)
-//!   - [`realtime::client`] - `RealtimeClient` and `RealtimeSession`
+//!   - [`RealtimeClient`](realtime::RealtimeClient) and
+//!     [`RealtimeSession`](realtime::RealtimeSession)
 //!   - [`realtime::events`] - Client/server event types
 //!
 //! ### Content & Media APIs
 //!
 //! - [`images`] - Images API (`/v1/images`)
-//!   - Generate, edit, create variations with DALL-E
+//!   - Generate, edit, create variations with the GPT Image models
+//!
+//! - [`videos`] - Videos API (`/v1/videos`)
+//!   - Generate, poll, download and remix Sora video clips
 //!
 //! - [`audio`] - Audio API (`/v1/audio`)
 //!   - Text-to-speech, transcription, translation
@@ -433,3 +437,4 @@ pub mod models;
 pub mod moderations;
 pub mod realtime;
 pub mod responses;
+pub mod videos;
