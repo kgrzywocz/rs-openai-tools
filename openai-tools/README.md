@@ -99,18 +99,19 @@ let chat = ChatCompletion::with_auth(auth);
 Import the necessary modules in your code:
 
 ```rust
-use openai_tools::chat::ChatCompletion;
-use openai_tools::responses::Responses;
-use openai_tools::embedding::Embedding;
+use openai_tools::chat::request::ChatCompletion;
+use openai_tools::responses::request::Responses;
+use openai_tools::embedding::request::Embedding;
 use openai_tools::realtime::RealtimeClient;
-use openai_tools::conversations::Conversations;
-use openai_tools::models::Models;
-use openai_tools::files::Files;
-use openai_tools::moderations::Moderations;
-use openai_tools::images::Images;
-use openai_tools::audio::Audio;
-use openai_tools::batch::Batches;
-use openai_tools::fine_tuning::FineTuning;
+use openai_tools::conversations::request::Conversations;
+use openai_tools::models::request::Models;
+use openai_tools::files::request::Files;
+use openai_tools::moderations::request::Moderations;
+use openai_tools::images::request::Images;
+use openai_tools::audio::request::Audio;
+use openai_tools::batch::request::Batches;
+use openai_tools::fine_tuning::request::FineTuning;
+use openai_tools::videos::request::Videos;
 ```
 
 # Supported APIs
@@ -125,10 +126,59 @@ use openai_tools::fine_tuning::FineTuning;
 | **Models** | `/v1/models` | CRUD |
 | **Files** | `/v1/files` | CRUD, Multipart Upload |
 | **Moderations** | `/v1/moderations` | Basic |
-| **Images** | `/v1/images` | Multipart Upload |
+| **Images** | `/v1/images` | Generate, Edit, Variations, Multipart Upload |
 | **Audio** | `/v1/audio` | Audio I/O, Multipart Upload |
 | **Batch** | `/v1/batches` | CRUD |
 | **Fine-tuning** | `/v1/fine_tuning/jobs` | CRUD |
+| **Videos** | `/v1/videos` | CRUD, Content Download, Remix |
+
+## Type-Safe Model Selection
+
+Models are selected through enums, so a typo is a compile error rather than a
+runtime `model_not_found`.
+
+| Enum | API | Variants |
+|------|-----|----------|
+| `ChatModel` | Chat, Responses | **GPT-5.6**: `Gpt5_6` (alias to Sol), `Gpt5_6Sol`, `Gpt5_6Terra`, `Gpt5_6Luna`<br>**GPT-5.5**: `Gpt5_5`, `Gpt5_5Pro`<br>**GPT-5.4**: `Gpt5_4`, `Gpt5_4Pro`, `Gpt5_4Mini`, `Gpt5_4Nano`<br>**GPT-5.3**: `Gpt5_3ChatLatest`<br>**Codex**: `Gpt5_3Codex`, `Gpt5_2Codex`, `Gpt5_1Codex`, `Gpt5_1CodexMax`<br>**GPT-5**: `Gpt5`, `Gpt5Pro`, `Gpt5_2`, `Gpt5_2ChatLatest`, `Gpt5_2Pro`, `Gpt5_1`, `Gpt5_1ChatLatest`, `Gpt5Mini`, `Gpt5Nano`<br>**Search**: `Gpt5SearchApi`, `Gpt4oSearchPreview`, `Gpt4oMiniSearchPreview`<br>**Audio**: `GptAudio`, `GptAudio1_5`, `GptAudioMini`<br>**GPT-4.1 / 4o / 4 / 3.5**: `Gpt4_1`, `Gpt4_1Mini`, `Gpt4_1Nano`, `Gpt4o`, `Gpt4oMini`, `Gpt4oAudioPreview`, `Gpt4Turbo`, `Gpt4`, `Gpt3_5Turbo`, `Gpt3_5Turbo16k`<br>**o-series**: `O1`, `O1Pro`, `O3`, `O3Pro`, `O3Mini`, `O4Mini`<br>`Custom(String)` |
+| `EmbeddingModel` | Embedding | `TextEmbedding3Small`, `TextEmbedding3Large`, `TextEmbeddingAda002` |
+| `RealtimeModel` | Realtime | `GptRealtime2_1`, `GptRealtime2_1Mini`, `GptRealtime2`, `GptRealtime1_5`, `GptRealtime`, `GptRealtimeMini`, `GptRealtimeTranslate`, `GptRealtime_2025_08_28` (default), `Custom(String)` |
+| `ImageModel` | Images | `GptImage1` (default), `GptImage1Mini`, `GptImage1_5`, `GptImage2`, `ChatGptImageLatest`, `DallE2`, `DallE3` |
+| `VideoModel` | Videos | `Sora2` (default), `Sora2Pro` |
+| `TtsModel` | Audio | `Tts1`, `Tts1Hd`, `Tts1_1106`, `Tts1Hd1106`, `Gpt4oMiniTts` |
+| `SttModel` | Audio | `Whisper1`, `Gpt4oTranscribe`, `Gpt4oMiniTranscribe`, `Gpt4oTranscribeDiarize`, `GptTranscribe`, `GptLiveTranscribe`, `GptRealtimeWhisper` |
+| `FineTuningModel` | Fine-tuning | `Gpt41_2025_04_14`, `Gpt41Mini_2025_04_14`, `Gpt41Nano_2025_04_14`, `Gpt4o_2024_08_06`, `Gpt4oMini_2024_07_18`, `Babbage002`, `Davinci002`, etc. |
+
+```rust
+use openai_tools::common::models::ChatModel;
+
+chat.model(ChatModel::Gpt5_6Sol);                    // Latest flagship
+chat.model(ChatModel::Gpt5_6Luna);                   // Most cost-efficient
+responses.model(ChatModel::Gpt5_5Pro);               // Responses API only
+chat.model(ChatModel::custom("ft:gpt-4.1-mini:my-org::abc123"));  // Fine-tuned
+```
+
+### Parameter Restrictions by Model Family
+
+The library validates parameters per model and drops unsupported ones with a
+`tracing::warn!` instead of letting the API reject the request.
+
+| Family | `temperature` / `top_p` / `n` / penalties | `reasoning` | Detect with |
+|--------|:--:|:--:|---|
+| Standard (GPT-4o, GPT-4.1, `gpt-audio`, ...) | Yes | No | - |
+| Reasoning (GPT-5.x, `*-codex`, o-series) | No (fixed) | Yes | `is_reasoning_model()` |
+| Search (`gpt-5-search-api`, `gpt-4o-*-search-preview`) | No (fixed) | No | `is_search_model()` |
+
+Two things are easy to get wrong here:
+
+- The **`*-chat-latest`** aliases (`gpt-5.1-chat-latest`, `gpt-5.2-chat-latest`,
+  `gpt-5.3-chat-latest`) point at the non-reasoning "Instant" snapshots, so they
+  accept the **full** standard parameter set despite the `gpt-5` prefix.
+- **Search models** reject the same parameters as reasoning models but expose no
+  `reasoning` parameter, so they are a separate category.
+
+**Responses API only** (no Chat Completions endpoint): `gpt-5.5-pro`,
+`gpt-5.4-pro`, `gpt-5.2-pro`, `gpt-5-pro`, `o3-pro`, and every `*-codex` model.
+
 
 ## Chat Completions API
 
@@ -417,9 +467,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 ```
 
-## Images API (DALL-E)
+## Images API
 
-Generate images with DALL-E:
+Generate images with the GPT Image models:
 
 ```rust
 use openai_tools::images::request::{Images, GenerateOptions, ImageModel, ImageSize, ImageQuality};
@@ -428,19 +478,35 @@ use openai_tools::images::request::{Images, GenerateOptions, ImageModel, ImageSi
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let images = Images::new()?;
 
-    // Generate an image
     let options = GenerateOptions {
-        model: Some(ImageModel::DallE3),
+        model: Some(ImageModel::GptImage1Mini),
         size: Some(ImageSize::Size1024x1024),
-        quality: Some(ImageQuality::Hd),
+        quality: Some(ImageQuality::Low),
         ..Default::default()
     };
     let response = images.generate("A sunset over mountains", options).await?;
-    println!("Image URL: {:?}", response.data[0].url);
+
+    // GPT Image models always return base64 data rather than a URL.
+    let bytes = response.data[0].as_bytes().unwrap()?;
+    std::fs::write("sunset.png", bytes)?;
 
     Ok(())
 }
 ```
+
+> **DALL-E has been retired.** `dall-e-2` and `dall-e-3` no longer exist on
+> `api.openai.com` - requests naming them fail with
+> `The model 'dall-e-3' does not exist.` The `DallE2` / `DallE3` variants are
+> kept because Azure OpenAI deployments can still serve them, and
+> `ImageModel::default()` is now `GptImage1`.
+
+The GPT Image models differ from DALL-E in three ways:
+
+| | DALL-E 3 | GPT Image |
+|---|---|---|
+| `quality` | `Standard`, `Hd` | `Low`, `Medium`, `High`, `Auto` |
+| `size` | `1024x1024`, `1792x1024`, `1024x1792` | `1024x1024`, `1024x1536`, `1536x1024`, `Auto` |
+| `response_format` / `style` | Supported | **Rejected** (`unknown_parameter`); always base64 |
 
 ## Audio API
 
@@ -534,6 +600,74 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 ```
 
+## Videos API (Sora)
+
+Generate video clips with Sora. Generation is asynchronous: `create` queues the
+job and returns immediately, so poll until it settles before downloading.
+
+```rust
+use openai_tools::videos::request::{Videos, CreateVideoOptions, VideoSeconds, VideoSize};
+
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let videos = Videos::new()?;
+
+    let options = CreateVideoOptions {
+        seconds: Some(VideoSeconds::Four),
+        size: Some(VideoSize::Size720x1280),
+        ..Default::default()
+    };
+    let job = videos.create("A red balloon over Tokyo at dawn", options).await?;
+    println!("Queued: {}", job.id);
+
+    // Poll until the job settles
+    let mut video = videos.retrieve(&job.id).await?;
+    while !video.is_terminal() {
+        tokio::time::sleep(std::time::Duration::from_secs(10)).await;
+        video = videos.retrieve(&job.id).await?;
+        println!("progress: {}%", video.progress);
+    }
+
+    if video.is_completed() {
+        let bytes = videos.content(&video.id, None).await?;
+        std::fs::write("out.mp4", bytes)?;
+    } else {
+        eprintln!("Generation failed: {:?}", video.error);
+    }
+
+    videos.delete(&video.id).await?;
+    Ok(())
+}
+```
+
+Other operations:
+
+```rust
+use openai_tools::videos::request::{Videos, SortOrder, VideoVariant};
+
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let videos = Videos::new()?;
+
+    // List recent jobs
+    let page = videos.list(Some(10), None, Some(SortOrder::Desc)).await?;
+    println!("{} jobs", page.data.len());
+
+    // Download a thumbnail instead of the clip
+    let thumbnail = videos.content("video_abc123", Some(VideoVariant::Thumbnail)).await?;
+    std::fs::write("thumb.jpg", thumbnail)?;
+
+    // Re-generate with an updated prompt
+    let remixed = videos.remix("video_abc123", "...but at night").await?;
+    println!("Remixed as {}", remixed.id);
+
+    Ok(())
+}
+```
+
+> **Cost**: video generation is billed per second of output and is far more
+> expensive than a text completion. `VideoSeconds` allows `4`, `8` and `12`.
+
 ## Embedding API
 
 ```rust
@@ -555,6 +689,46 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 ```
 
 ## Update History
+
+<details>
+<summary>v2.0.0</summary>
+
+**Breaking changes**
+
+- Model enums (`ChatModel`, `RealtimeModel`, `ImageModel`, `ImageSize`, `ImageQuality`, `SttModel`, `TtsModel`, `FineTuningModel`) gained new variants. These enums are not `#[non_exhaustive]`, so exhaustive `match` expressions downstream will no longer compile - add a `_ =>` arm or handle the new variants.
+- `ImageModel::default()` changed from `DallE3` to `GptImage1`. OpenAI retired `dall-e-2`/`dall-e-3` on `api.openai.com`, so the old default no longer resolves. The variants remain for Azure OpenAI deployments.
+- `gpt-5.1-chat-latest` and `gpt-5.2-chat-latest` are no longer classified as reasoning models. Previously `temperature`, `n`, `logprobs` and the penalties were silently dropped for them; they are now sent through. If you relied on that filtering, the values now reach the API.
+- `Function` no longer serializes `arguments` as a nested object. It is emitted once, as the JSON-encoded string the API schema requires.
+
+**New: Videos API (`/v1/videos`)**
+
+- Added the `videos` module: `Videos` client with create, retrieve, list, delete, content download and remix
+- `VideoModel` (`Sora2`, `Sora2Pro`), `VideoSize`, `VideoSeconds`, `VideoVariant`, `InputReference`, `CreateVideoOptions`, `SortOrder`
+- `Video`, `VideoStatus`, `VideoError`, `VideoListResponse`, `DeleteVideoResponse`
+- Unknown lifecycle states deserialize into `VideoStatus::Other` rather than failing
+
+**New models**
+
+- `ChatModel`: GPT-5.6 (`Gpt5_6`, `Gpt5_6Sol`, `Gpt5_6Terra`, `Gpt5_6Luna`), GPT-5.5 (`Gpt5_5`, `Gpt5_5Pro`), GPT-5.4 (`Gpt5_4`, `Gpt5_4Pro`, `Gpt5_4Mini`, `Gpt5_4Nano`), `Gpt5_3ChatLatest`, Codex (`Gpt5_3Codex`, `Gpt5_2Codex`, `Gpt5_1Codex`), `Gpt5`, `Gpt5Pro`, `O3Pro`, search models (`Gpt5SearchApi`, `Gpt4oSearchPreview`, `Gpt4oMiniSearchPreview`), audio chat models (`GptAudio`, `GptAudio1_5`, `GptAudioMini`), `Gpt3_5Turbo16k`
+- `RealtimeModel`: `GptRealtime2_1`, `GptRealtime2_1Mini`, `GptRealtime2`, `GptRealtime1_5`, `GptRealtime`, `GptRealtimeMini`, `GptRealtimeTranslate`
+- `ImageModel`: `GptImage1Mini`, `GptImage1_5`, `GptImage2`, `ChatGptImageLatest`
+- `ImageSize`: `Size1024x1536`, `Size1536x1024`, `Auto`; `ImageQuality`: `Low`, `Medium`, `High`, `Auto`
+- `SttModel`: `GptTranscribe`, `GptLiveTranscribe`, `GptRealtimeWhisper`, `Gpt4oMiniTranscribe`, `Gpt4oTranscribeDiarize`
+- `TtsModel`: `Tts1_1106`, `Tts1Hd1106`; `FineTuningModel`: `Babbage002`, `Davinci002`
+
+**Fixes**
+
+- **Fix**: `Function` serialized `arguments` twice (once as an object, once as a JSON string), which the API rejects with `duplicate JSON key 'arguments'`. It is now emitted once, as the JSON string the schema requires. This broke multi-turn function calling.
+- **Fix**: `gpt-5.1-chat-latest` and `gpt-5.2-chat-latest` were classified as reasoning models, so `temperature`, `n`, `logprobs` and the penalties were silently dropped. They point at the non-reasoning "Instant" snapshots and now accept the full standard parameter set.
+- **Fix**: `ImageModel::default()` was `DallE3`, which OpenAI has retired; it is now `GptImage1`. The `DallE2` / `DallE3` variants remain for Azure deployments.
+
+**Other**
+
+- Added `ChatModel::is_search_model()` and `ParameterSupport::search_model()` for the web-search models, which reject the sampling parameters like reasoning models but expose no `reasoning` parameter
+- Added `SttModel::supports_file_transcription()` - `gpt-live-transcribe` and `gpt-realtime-whisper` are realtime-only and are rejected by `/v1/audio/transcriptions`
+- Fixed the `Modules` example, which used module paths that do not exist (`openai_tools::chat::ChatCompletion` instead of `openai_tools::chat::request::ChatCompletion`)
+
+</details>
 
 <details>
 <summary>v1.1.0</summary>
@@ -678,3 +852,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 ## License
 
 MIT License
+
+---
+*This file was generated by Claude Code.*

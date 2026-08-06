@@ -88,6 +88,7 @@ rs-openai-tools/
         ├── audio/      # Audio API (TTS, STT)
         ├── batch/      # Batch API
         ├── fine_tuning/ # Fine-tuning API
+        ├── videos/      # Videos API (Sora)
         └── common/     # Shared types
 ```
 
@@ -136,7 +137,7 @@ rs-openai-tools/
   - `response.rs`: `ImageResponse`, `ImageData`
 
 - **`audio/`**: Audio API (`/v1/audio`)
-  - `request.rs`: `Audio` client for TTS, transcription, translation; `TtsModel` (Tts1, Tts1Hd, Gpt4oMiniTts), `SttModel` (Whisper1, Gpt4oTranscribe), `Voice` (Alloy, Ash, Ballad, Cedar, Coral, Echo, Fable, Marin, Nova, Onyx, Sage, Shimmer, Verse), `AudioFormat`, `TtsOptions` (with `instructions` field for Gpt4oMiniTts)
+  - `request.rs`: `Audio` client for TTS, transcription, translation; `TtsModel` (Tts1, Tts1Hd, Gpt4oMiniTts), `SttModel` (Whisper1, Gpt4oTranscribe, Gpt4oMiniTranscribe, GptTranscribe, GptLiveTranscribe, GptRealtimeWhisper), `Voice` (Alloy, Ash, Ballad, Cedar, Coral, Echo, Fable, Marin, Nova, Onyx, Sage, Shimmer, Verse), `AudioFormat`, `TtsOptions` (with `instructions` field for Gpt4oMiniTts)
   - `response.rs`: `TranscriptionResponse`, `Word`, `Segment`
 
 - **`batch/`**: Batch API (`/v1/batches`)
@@ -146,6 +147,10 @@ rs-openai-tools/
 - **`fine_tuning/`**: Fine-tuning API (`/v1/fine_tuning/jobs`)
   - `request.rs`: `FineTuning` client for jobs, events, checkpoints
   - `response.rs`: `FineTuningJob`, `FineTuningEvent`, `FineTuningCheckpoint`
+
+- **`videos/`**: Videos API (`/v1/videos`) - Sora video generation
+  - `request.rs`: `Videos` client for create, retrieve, list, delete, content, remix; `VideoModel` (Sora2, Sora2Pro), `VideoSize`, `VideoSeconds`, `VideoVariant`, `InputReference`, `CreateVideoOptions`, `SortOrder`
+  - `response.rs`: `Video`, `VideoStatus`, `VideoError`, `VideoListResponse`, `DeleteVideoResponse`
 
 - **`common/`**: Shared types across all APIs
   - `auth.rs`: Authentication abstraction (`AuthProvider`, `OpenAIAuth`, `AzureAuth`) for OpenAI and Azure OpenAI APIs
@@ -241,10 +246,12 @@ Chat Completions API and Responses API. Images API does **not** support this par
 
 | Enum | API | Available Variants |
 |------|-----|-------------------|
-| `ChatModel` | Chat, Responses | **GPT-5**: `Gpt5_2`, `Gpt5_2ChatLatest`, `Gpt5_2Pro`, `Gpt5_1`, `Gpt5_1ChatLatest`, `Gpt5_1CodexMax`, `Gpt5Mini` / **GPT-4.1**: `Gpt4_1`, `Gpt4_1Mini`, `Gpt4_1Nano` / **GPT-4o**: `Gpt4o`, `Gpt4oMini`, `Gpt4oAudioPreview` / **GPT-4/3.5**: `Gpt4Turbo`, `Gpt4`, `Gpt3_5Turbo` / **Reasoning**: `O1`, `O1Pro`, `O3`, `O3Mini`, `O4Mini` / `Custom(String)` |
+| `ChatModel` | Chat, Responses | **GPT-5.6**: `Gpt5_6` (alias→Sol), `Gpt5_6Sol`, `Gpt5_6Terra`, `Gpt5_6Luna` / **GPT-5.5**: `Gpt5_5`, `Gpt5_5Pro` / **GPT-5.4**: `Gpt5_4`, `Gpt5_4Pro`, `Gpt5_4Mini`, `Gpt5_4Nano` / **GPT-5.3**: `Gpt5_3ChatLatest` / **Codex**: `Gpt5_3Codex`, `Gpt5_2Codex`, `Gpt5_1Codex`, `Gpt5_1CodexMax` / **GPT-5**: `Gpt5`, `Gpt5Pro`, `Gpt5_2`, `Gpt5_2ChatLatest`, `Gpt5_2Pro`, `Gpt5_1`, `Gpt5_1ChatLatest`, `Gpt5Mini`, `Gpt5Nano` / **Search**: `Gpt5SearchApi`, `Gpt4oSearchPreview`, `Gpt4oMiniSearchPreview` / **Audio**: `GptAudio`, `GptAudio1_5`, `GptAudioMini` / **GPT-4.1**: `Gpt4_1`, `Gpt4_1Mini`, `Gpt4_1Nano` / **GPT-4o**: `Gpt4o`, `Gpt4oMini`, `Gpt4oAudioPreview` / **GPT-4/3.5**: `Gpt4Turbo`, `Gpt4`, `Gpt3_5Turbo`, `Gpt3_5Turbo16k` / **Reasoning**: `O1`, `O1Pro`, `O3`, `O3Pro`, `O3Mini`, `O4Mini` / `Custom(String)` |
 | `EmbeddingModel` | Embedding | `TextEmbedding3Small`, `TextEmbedding3Large`, `TextEmbeddingAda002` |
-| `RealtimeModel` | Realtime | `GptRealtime_2025_08_28`, `Custom(String)` |
-| `FineTuningModel` | Fine-tuning | `Gpt41_2025_04_14`, `Gpt41Mini_2025_04_14`, `Gpt41Nano_2025_04_14`, `Gpt4oMini_2024_07_18`, `Gpt4o_2024_08_06`, `Gpt4_0613`, `Gpt35Turbo_0125`, etc. |
+| `RealtimeModel` | Realtime | `GptRealtime2_1`, `GptRealtime2_1Mini`, `GptRealtime2`, `GptRealtime1_5`, `GptRealtime`, `GptRealtimeMini`, `GptRealtimeTranslate`, `GptRealtime_2025_08_28` (default), `Custom(String)` |
+| `FineTuningModel` | Fine-tuning | `Gpt41_2025_04_14`, `Gpt41Mini_2025_04_14`, `Gpt41Nano_2025_04_14`, `Gpt4oMini_2024_07_18`, `Gpt4o_2024_08_06`, `Gpt4_0613`, `Gpt35Turbo_0125`, `Babbage002`, `Davinci002`, etc. |
+| `ImageModel` | Images | `GptImage1` (default), `GptImage1Mini`, `GptImage1_5`, `GptImage2`, `ChatGptImageLatest`, `DallE2`/`DallE3` (retired on OpenAI; Azure only) |
+| `VideoModel` | Videos | `Sora2` (default), `Sora2Pro` |
 
 ```rust
 use openai_tools::common::models::{ChatModel, EmbeddingModel, RealtimeModel, FineTuningModel};
@@ -659,6 +666,7 @@ Each API (Chat, Embedding, etc.) requires its own complete endpoint URL includin
 | **Audio** | `/v1/audio` | Audio I/O, Multipart Upload |
 | **Batch** | `/v1/batches` | CRUD |
 | **Fine-tuning** | `/v1/fine_tuning/jobs` | CRUD |
+| **Videos** | `/v1/videos` | CRUD, Content Download, Remix |
 
 **Chat Completions API Features:**
 - Structured output (JSON schema)
@@ -722,7 +730,9 @@ Each API (Chat, Embedding, etc.) requires its own complete endpoint URL includin
 - Detailed category scores
 
 **Images API Features:**
-- Image generation (DALL-E 2, DALL-E 3, GPT Image)
+- Image generation (GPT Image 1 / 1 Mini / 1.5 / 2)
+- **DALL-E retired**: `dall-e-2`/`dall-e-3` no longer exist on `api.openai.com` (the API returns "The model 'dall-e-3' does not exist."). The enum variants remain for Azure deployments. `ImageModel::default()` is `GptImage1`.
+- GPT Image models reject `response_format` and `style` (`unknown_parameter`) and always return base64; `quality` must be `low`/`medium`/`high`/`auto`, not `standard`/`hd`
 - Image editing with masks
 - Image variations (DALL-E 2 only)
 - URL or base64 response format
@@ -743,7 +753,8 @@ Each API (Chat, Embedding, etc.) requires its own complete endpoint URL includin
 - Text-to-speech (TTS) with multiple voices: Alloy, Ash, Ballad, Cedar, Coral, Echo, Fable, Marin, Nova, Onyx, Sage, Shimmer, Verse
 - TTS models: Tts1, Tts1Hd, Gpt4oMiniTts
 - `instructions` parameter for Gpt4oMiniTts (control voice tone, emotion, and pacing with natural language)
-- STT models: Whisper1, Gpt4oTranscribe
+- STT models: Whisper1, Gpt4oTranscribe, Gpt4oMiniTranscribe, GptTranscribe
+- Realtime-only STT models: GptLiveTranscribe, GptRealtimeWhisper (check `SttModel::supports_file_transcription()` before calling `transcribe`)
 - Audio transcription (Whisper, GPT-4o Transcribe)
 - Audio translation to English
 - Multiple audio formats (MP3, WAV, FLAC, Opus, AAC, PCM)
@@ -770,7 +781,13 @@ Each API (Chat, Embedding, etc.) requires its own complete endpoint URL includin
 
 ### Reasoning Models (GPT-5 Series, o1, o3, o4 Series)
 
-OpenAI's reasoning models (GPT-5 series: `gpt-5.2`, `gpt-5.1`, `gpt-5-mini`, and o-series: `o1`, `o3`, `o3-mini`, `o4-mini`, etc.) have specific parameter restrictions. This library automatically handles these restrictions by ignoring unsupported parameters and logging warnings.
+OpenAI's reasoning models (GPT-5 series: `gpt-5.6-*`, `gpt-5.5`, `gpt-5.4`, `gpt-5.2`, `gpt-5.1`, `gpt-5-mini`, the `*-codex` models, and o-series: `o1`, `o3`, `o3-mini`, `o4-mini`, etc.) have specific parameter restrictions. This library automatically handles these restrictions by ignoring unsupported parameters and logging warnings.
+
+**Exception — `*-chat-latest` models**: `gpt-5.1-chat-latest`, `gpt-5.2-chat-latest` and `gpt-5.3-chat-latest` point at the non-reasoning "Instant" snapshots used in ChatGPT. They accept the **full standard parameter set** (`temperature`, `top_p`, `n`, `logprobs`, …), so `is_reasoning_model()` returns `false` for them and no parameters are dropped.
+
+**Responses API only** (no Chat Completions endpoint): `gpt-5.5-pro`, `gpt-5.4-pro`, `gpt-5.2-pro`, `gpt-5-pro`, `o3-pro`, and all `*-codex` models.
+
+**Search models** (`gpt-5-search-api`, `gpt-4o-search-preview`, `gpt-4o-mini-search-preview`) are a third category: they reject the entire sampling parameter set (`temperature`, `top_p`, `n`, `logprobs`, both penalties) exactly like reasoning models, but they expose **no** `reasoning` parameter. Use `ChatModel::is_search_model()`; `parameter_support()` returns `ParameterSupport::search_model()` for them.
 
 #### GPT-5 Series Reasoning Configuration
 
@@ -892,3 +909,6 @@ Standard models support all available parameters without restrictions:
 - [OpenAI Reasoning Models Guide](https://platform.openai.com/docs/guides/reasoning)
 - [Chat Completions API Reference](https://platform.openai.com/docs/api-reference/chat)
 - [Responses API Reference](https://platform.openai.com/docs/api-reference/responses)
+
+---
+*This file was generated by Claude Code.*
