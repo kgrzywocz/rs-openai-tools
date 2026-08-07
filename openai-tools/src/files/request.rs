@@ -47,6 +47,7 @@ const FILES_PATH: &str = "files";
 /// Different purposes have different processing requirements and usage patterns.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
+#[non_exhaustive]
 pub enum FilePurpose {
     /// For use with Assistants and Message files
     Assistants,

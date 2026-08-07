@@ -8,6 +8,7 @@ use std::collections::HashMap;
 /// The status of a batch job.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
+#[non_exhaustive]
 pub enum BatchStatus {
     /// The batch is being validated.
     Validating,
@@ -25,6 +26,12 @@ pub enum BatchStatus {
     Cancelling,
     /// The batch has been cancelled.
     Cancelled,
+    /// A status this version of the library does not know about.
+    ///
+    /// OpenAI can add lifecycle states at any time; capturing the raw value
+    /// keeps the surrounding response parseable.
+    #[serde(untagged)]
+    Other(String),
 }
 
 /// Counts of requests in different states within the batch.

@@ -54,6 +54,7 @@ const CONVERSATIONS_PATH: &str = "conversations";
 /// This enum defines various types of additional information that can be
 /// included when listing conversation items.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[non_exhaustive]
 pub enum ConversationInclude {
     /// Include web search call action sources
     #[serde(rename = "web_search_call.action.sources")]

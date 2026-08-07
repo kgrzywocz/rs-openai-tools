@@ -76,6 +76,7 @@ impl From<Tool> for RealtimeTool {
 /// Session modality - what types of input/output are supported.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
+#[non_exhaustive]
 pub enum Modality {
     /// Text input/output
     Text,

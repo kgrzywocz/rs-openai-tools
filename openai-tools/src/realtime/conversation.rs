@@ -143,8 +143,9 @@ impl FunctionCallOutputItem {
 }
 
 /// Item status in the conversation.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
+#[non_exhaustive]
 pub enum ItemStatus {
     /// Item is being processed.
     InProgress,
@@ -152,4 +153,10 @@ pub enum ItemStatus {
     Completed,
     /// Item processing was incomplete.
     Incomplete,
+    /// A status this version of the library does not know about.
+    ///
+    /// OpenAI can add lifecycle states at any time; capturing the raw value
+    /// keeps the surrounding response parseable.
+    #[serde(untagged)]
+    Other(String),
 }

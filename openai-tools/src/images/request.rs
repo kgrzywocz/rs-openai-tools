@@ -47,6 +47,7 @@ const IMAGES_PATH: &str = "images";
 /// are kept because Azure OpenAI deployments can still serve DALL-E, but new
 /// OpenAI code should use one of the GPT Image models.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
+#[non_exhaustive]
 pub enum ImageModel {
     /// DALL-E 2 model - supports variations, smaller sizes
     ///
@@ -101,6 +102,7 @@ impl std::fmt::Display for ImageModel {
 
 /// Image sizes for generation.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
+#[non_exhaustive]
 pub enum ImageSize {
     /// 256x256 pixels (DALL-E 2 only)
     #[serde(rename = "256x256")]
@@ -158,6 +160,7 @@ impl std::fmt::Display for ImageSize {
 /// `Low`/`Medium`/`High`/`Auto` instead.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
 #[serde(rename_all = "lowercase")]
+#[non_exhaustive]
 pub enum ImageQuality {
     /// Standard quality (DALL-E 3)
     #[default]

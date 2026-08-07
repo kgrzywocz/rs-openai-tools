@@ -7,6 +7,7 @@ use serde::{Deserialize, Serialize};
 /// The status of a fine-tuning job.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
+#[non_exhaustive]
 pub enum FineTuningJobStatus {
     /// Files are being validated.
     ValidatingFiles,
@@ -20,6 +21,12 @@ pub enum FineTuningJobStatus {
     Failed,
     /// Job was cancelled.
     Cancelled,
+    /// A status this version of the library does not know about.
+    ///
+    /// OpenAI can add lifecycle states at any time; capturing the raw value
+    /// keeps the surrounding response parseable.
+    #[serde(untagged)]
+    Other(String),
 }
 
 /// Hyperparameters used for fine-tuning.

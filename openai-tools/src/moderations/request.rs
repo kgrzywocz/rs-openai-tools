@@ -45,6 +45,7 @@ const MODERATIONS_PATH: &str = "moderations";
 /// The model to use for content moderation. Newer omni-moderation models
 /// support more categorization options and multi-modal inputs.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
+#[non_exhaustive]
 pub enum ModerationModel {
     /// Latest omni-moderation model with multi-modal support
     #[serde(rename = "omni-moderation-latest")]

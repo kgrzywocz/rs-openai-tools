@@ -41,6 +41,7 @@ const AUDIO_PATH: &str = "audio";
 
 /// Text-to-speech models.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
+#[non_exhaustive]
 pub enum TtsModel {
     /// Standard quality TTS model
     #[serde(rename = "tts-1")]
@@ -100,6 +101,7 @@ impl std::fmt::Display for TtsModel {
 /// Voice options for text-to-speech.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
 #[serde(rename_all = "lowercase")]
+#[non_exhaustive]
 pub enum Voice {
     /// Alloy voice
     #[default]
@@ -160,6 +162,7 @@ impl std::fmt::Display for Voice {
 /// Audio output formats for TTS.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
 #[serde(rename_all = "lowercase")]
+#[non_exhaustive]
 pub enum AudioFormat {
     /// MP3 format (default)
     #[default]
@@ -203,6 +206,7 @@ impl std::fmt::Display for AudioFormat {
 
 /// Speech-to-text models for transcription and translation.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
+#[non_exhaustive]
 pub enum SttModel {
     /// Whisper v1 model
     #[serde(rename = "whisper-1")]
@@ -269,6 +273,7 @@ impl std::fmt::Display for SttModel {
 /// Transcription response formats.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
 #[serde(rename_all = "snake_case")]
+#[non_exhaustive]
 pub enum TranscriptionFormat {
     /// JSON format
     #[default]
@@ -299,6 +304,7 @@ impl TranscriptionFormat {
 /// Timestamp granularity options.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
+#[non_exhaustive]
 pub enum TimestampGranularity {
     /// Word-level timestamps
     Word,

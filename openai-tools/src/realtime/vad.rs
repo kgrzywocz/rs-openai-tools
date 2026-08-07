@@ -124,6 +124,7 @@ impl SemanticVadConfig {
 /// Eagerness level for semantic turn detection.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
 #[serde(rename_all = "lowercase")]
+#[non_exhaustive]
 pub enum Eagerness {
     /// Wait longer for user to finish (more conservative).
     Low,

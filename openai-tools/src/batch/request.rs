@@ -42,6 +42,7 @@ const BATCHES_PATH: &str = "batches";
 
 /// The API endpoint to use for batch requests.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[non_exhaustive]
 pub enum BatchEndpoint {
     /// Chat Completions API (/v1/chat/completions)
     #[serde(rename = "/v1/chat/completions")]
@@ -75,6 +76,7 @@ impl BatchEndpoint {
 
 /// The time window in which the batch must be completed.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Default)]
+#[non_exhaustive]
 pub enum CompletionWindow {
     /// 24 hours
     #[serde(rename = "24h")]

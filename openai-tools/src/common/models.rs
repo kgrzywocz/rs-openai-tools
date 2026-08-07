@@ -215,6 +215,7 @@ impl ParameterSupport {
 /// assert_eq!(model.as_str(), "o3-mini");
 /// ```
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize, Default)]
+#[non_exhaustive]
 pub enum ChatModel {
     // === GPT-5.6 Series (Latest Flagship) ===
     /// GPT-5.6 - Alias routing to GPT-5.6 Sol
@@ -793,6 +794,7 @@ impl From<String> for ChatModel {
 ///
 /// See [OpenAI Embeddings Guide](https://platform.openai.com/docs/guides/embeddings)
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Default)]
+#[non_exhaustive]
 pub enum EmbeddingModel {
     /// text-embedding-3-small - Improved, more performant embedding model
     ///
@@ -887,6 +889,7 @@ impl From<&str> for EmbeddingModel {
 /// See [OpenAI Realtime API Documentation](https://platform.openai.com/docs/guides/realtime)
 #[allow(non_camel_case_types)]
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize, Default)]
+#[non_exhaustive]
 pub enum RealtimeModel {
     /// gpt-realtime-2.1 - Reasoning speech-to-speech model with tool use
     ///
@@ -1021,6 +1024,7 @@ impl From<&str> for RealtimeModel {
 /// See [OpenAI Fine-tuning Guide](https://platform.openai.com/docs/guides/fine-tuning)
 #[allow(non_camel_case_types)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Default)]
+#[non_exhaustive]
 pub enum FineTuningModel {
     // === GPT-4.1 Series ===
     /// gpt-4.1-2025-04-14 - GPT-4.1 for fine-tuning

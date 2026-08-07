@@ -10,6 +10,7 @@ use crate::realtime::vad::TurnDetection;
 /// Server events received from the OpenAI Realtime API.
 #[derive(Debug, Clone, Deserialize)]
 #[serde(tag = "type")]
+#[non_exhaustive]
 pub enum ServerEvent {
     // ==================== Session Events ====================
     /// Session was created (first event after connection).
@@ -145,6 +146,18 @@ pub enum ServerEvent {
     /// Error occurred.
     #[serde(rename = "error")]
     Error(ErrorEvent),
+
+    // ==================== Unknown ====================
+    /// An event type this version of the library does not know about.
+    ///
+    /// OpenAI adds realtime events regularly. Without this arm a single
+    /// unrecognised `type` would fail deserialization and tear down the
+    /// session, so unknown events are surfaced here instead.
+    ///
+    /// Note that the payload is not preserved: `serde`'s `other` attribute is
+    /// only allowed on a unit variant.
+    #[serde(other)]
+    Unknown,
 }
 
 // ==================== Session Event Types ====================
@@ -333,14 +346,21 @@ pub struct ResponseInfo {
 }
 
 /// Response status.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
+#[non_exhaustive]
 pub enum ResponseStatus {
     InProgress,
     Completed,
     Cancelled,
     Incomplete,
     Failed,
+    /// A status this version of the library does not know about.
+    ///
+    /// OpenAI can add lifecycle states at any time; capturing the raw value
+    /// keeps the surrounding response parseable.
+    #[serde(untagged)]
+    Other(String),
 }
 
 /// Response item (output item in a response).
@@ -604,6 +624,8 @@ impl ServerEvent {
             Self::ResponseFunctionCallArgumentsDone(e) => Some(&e.event_id),
             Self::RateLimitsUpdated(e) => Some(&e.event_id),
             Self::Error(e) => Some(&e.event_id),
+            // The payload of an unrecognised event is not retained.
+            Self::Unknown => None,
         }
     }
 }

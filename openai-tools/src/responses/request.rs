@@ -29,6 +29,7 @@ use strum::{Display, EnumString};
 /// <https://platform.openai.com/docs/api-reference/responses/create>
 #[derive(Debug, Clone, EnumString, Display, Serialize, PartialEq)]
 #[serde(rename_all = "snake_case")]
+#[non_exhaustive]
 pub enum Include {
     /// Include web search call results in the output  
     ///
@@ -106,6 +107,7 @@ pub enum Include {
 /// Corresponds to the `reasoning.effort` parameter in the OpenAI Responses API.
 #[derive(Debug, Clone, Serialize, EnumString, Display, PartialEq)]
 #[serde(rename_all = "snake_case")]
+#[non_exhaustive]
 pub enum ReasoningEffort {
     /// No reasoning tokens - fastest response (GPT-5.1/5.2 default)
     ///
@@ -162,6 +164,7 @@ pub enum ReasoningEffort {
 /// Corresponds to the `reasoning.summary` parameter in the OpenAI Responses API.
 #[derive(Debug, Clone, Serialize, EnumString, Display, PartialEq)]
 #[serde(rename_all = "snake_case")]
+#[non_exhaustive]
 pub enum ReasoningSummary {
     /// Automatically determine the appropriate summary format
     ///
@@ -211,6 +214,7 @@ pub struct Reasoning {
 /// Corresponds to the `text.verbosity` parameter in the OpenAI Responses API.
 #[derive(Debug, Clone, Serialize, EnumString, Display, PartialEq)]
 #[serde(rename_all = "snake_case")]
+#[non_exhaustive]
 pub enum TextVerbosity {
     /// Low verbosity - concise responses
     ///

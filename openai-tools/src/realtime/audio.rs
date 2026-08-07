@@ -5,6 +5,7 @@ use serde::{Deserialize, Serialize};
 /// Audio formats supported by the Realtime API.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
 #[serde(rename_all = "snake_case")]
+#[non_exhaustive]
 pub enum AudioFormat {
     /// PCM 16-bit linear encoding (24kHz, mono)
     #[default]
@@ -18,6 +19,7 @@ pub enum AudioFormat {
 /// Voice options for text-to-speech output.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
 #[serde(rename_all = "lowercase")]
+#[non_exhaustive]
 pub enum Voice {
     #[default]
     Alloy,
@@ -32,6 +34,7 @@ pub enum Voice {
 
 /// Transcription model options for input audio.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
+#[non_exhaustive]
 pub enum TranscriptionModel {
     #[serde(rename = "whisper-1")]
     #[default]
@@ -84,6 +87,7 @@ pub struct InputAudioNoiseReduction {
 /// Noise reduction type options.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
+#[non_exhaustive]
 pub enum NoiseReductionType {
     /// Optimized for near-field audio (close microphone).
     NearField,

@@ -40,6 +40,7 @@ const VIDEOS_PATH: &str = "videos";
 
 /// Video generation models.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
+#[non_exhaustive]
 pub enum VideoModel {
     /// Sora 2 - standard video generation model
     #[serde(rename = "sora-2")]
@@ -68,6 +69,7 @@ impl std::fmt::Display for VideoModel {
 
 /// Output resolutions supported by the Videos API.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
+#[non_exhaustive]
 pub enum VideoSize {
     /// 720x1280 - portrait (default)
     #[serde(rename = "720x1280")]
@@ -107,6 +109,7 @@ impl std::fmt::Display for VideoSize {
 /// The API requires this value as a *string*; sending an integer is rejected
 /// with `invalid_type`. The `serde` rename below produces the string form.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
+#[non_exhaustive]
 pub enum VideoSeconds {
     /// 4 second clip (default)
     #[serde(rename = "4")]
@@ -140,6 +143,7 @@ impl std::fmt::Display for VideoSeconds {
 /// Downloadable asset variants for a completed video.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
 #[serde(rename_all = "lowercase")]
+#[non_exhaustive]
 pub enum VideoVariant {
     /// The rendered video file (default)
     #[default]

@@ -10,6 +10,7 @@ use serde::{Deserialize, Serialize};
 /// new server-side status does not break existing clients.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
+#[non_exhaustive]
 pub enum VideoStatus {
     /// Job accepted and waiting to start
     Queued,
