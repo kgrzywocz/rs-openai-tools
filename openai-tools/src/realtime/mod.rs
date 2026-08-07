@@ -156,7 +156,7 @@ pub mod vad;
 // Re-export main types
 pub use audio::{AudioFormat, InputAudioTranscription, TranscriptionModel, Voice};
 pub use client::{RealtimeClient, RealtimeSession};
-pub use conversation::{ContentPart, ConversationItem, FunctionCallItem, FunctionCallOutputItem, MessageItem, MessageRole};
+pub use conversation::{ContentPart, ConversationItem, FunctionCallItem, FunctionCallOutputItem, ItemStatus, MessageItem, MessageRole};
 pub use events::client::ClientEvent;
 pub use events::server::ServerEvent;
 pub use session::{MaxTokens, Modality, NamedFunction, NamedToolChoice, RealtimeTool, SessionConfig, SimpleToolChoice, ToolChoice};
