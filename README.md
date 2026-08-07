@@ -667,6 +667,30 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 ## Update History
 
 <details>
+<summary>v3.0.0</summary>
+
+This release makes the public enums forward-compatible, so that future OpenAI
+additions no longer require a major version.
+
+**Breaking changes**
+
+- 38 public enums are now `#[non_exhaustive]`. Exhaustive `match` expressions over them must add a `_ =>` arm. In exchange, adding a model, voice, size or status stops being a breaking change - the exact reason 2.0.0 had to be major.
+- `Role`, `BatchStatus`, `FineTuningJobStatus`, `ItemStatus` and `ResponseStatus` gained an `Other(String)` variant, and `ServerEvent` gained `Unknown`.
+- `ItemStatus` and `ResponseStatus` no longer derive `Copy`, because the new `Other(String)` variant holds an allocation. `Clone` is unaffected.
+- `Role` no longer derives its `Display` impl from `strum`; the output is unchanged (`as_str()` backs it directly).
+
+**Fixes**
+
+- **`Role` was missing `Developer`.** The `developer` role is the reasoning-model replacement for `system`, and it could not be expressed at all. The Conversations API also echoes `role: "developer"` back on stored items, which the previous enum could not deserialize.
+- **`ItemStatus` was not publicly reachable.** It appears in the public field `ResponseItem::status` but was neither exported nor re-exported, so callers could not name the type. It is now re-exported from `realtime`.
+
+**Why both mechanisms**
+
+`#[non_exhaustive]` is a compile-time/semver tool: it makes adding a variant non-breaking. It does *nothing* at runtime - an unrecognised value from the API still fails to deserialize. That is what the catch-all variants fix. Response-side enums need both; request-side enums only need the attribute.
+
+</details>
+
+<details>
 <summary>v2.0.1</summary>
 
 - Restricted the `image` dependency to the formats `Content::from_image_file` actually accepts (`png`, `jpeg`, `gif`). The default feature set pulled in AVIF encoding (`ravif` -> `rav1e` -> `bitstream-io` -> the yanked `core2`) plus a dozen unused codecs; this drops 53 transitive dependencies and shortens clean builds.

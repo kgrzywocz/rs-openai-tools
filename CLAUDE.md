@@ -242,6 +242,23 @@ Note: `safety_identifier` is the successor to the legacy `user` parameter. It is
 Chat Completions API and Responses API. Images API does **not** support this parameter (use the
 `user` field in `GenerateOptions`/`EditOptions`/`VariationOptions` instead).
 
+**Enum Forward Compatibility** (since v3.0.0): OpenAI adds enum values continuously, so the public enums use two distinct mechanisms. Do not confuse them:
+
+| Mechanism | Problem solved | When it applies |
+|-----------|----------------|-----------------|
+| `#[non_exhaustive]` | Adding a variant is not a breaking change | Compile time / semver |
+| `Other(String)` / `Unknown` | Unrecognised API values still deserialize | Runtime |
+
+`#[non_exhaustive]` does **nothing** at runtime — an unknown value from the API still fails to deserialize without a catch-all variant. Rules when adding a new enum:
+
+- **Request-side value enums** (models, voices, sizes, formats): mark `#[non_exhaustive]`.
+- **Response-side enums** (statuses, events): mark `#[non_exhaustive]` **and** add a catch-all variant (`#[serde(untagged)] Other(String)` for string enums; `#[serde(other)] Unknown` for internally tagged enums like `ServerEvent`).
+- **Library-owned closed types** (`ParameterRestriction`, `AuthProvider`, `SortOrder`, …): leave as-is.
+
+`tests/enum_forward_compat.rs` audits the source and fails if a designated enum loses `#[non_exhaustive]`. Add new enums to its `REQUIRED` list.
+
+Note: a catch-all variant holding a `String` is incompatible with `#[derive(Copy)]`.
+
 **Type-Safe Model Selection**: All APIs use enum-based model selection for compile-time validation:
 
 | Enum | API | Available Variants |
