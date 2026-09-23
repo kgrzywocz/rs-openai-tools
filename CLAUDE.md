@@ -267,7 +267,7 @@ Note: a catch-all variant holding a `String` is incompatible with `#[derive(Copy
 | `EmbeddingModel` | Embedding | `TextEmbedding3Small`, `TextEmbedding3Large`, `TextEmbeddingAda002` |
 | `RealtimeModel` | Realtime | `GptRealtime2_1`, `GptRealtime2_1Mini`, `GptRealtime2`, `GptRealtime1_5`, `GptRealtime`, `GptRealtimeMini`, `GptRealtimeTranslate`, `GptRealtime_2025_08_28` (default), `Custom(String)` |
 | `FineTuningModel` | Fine-tuning | `Gpt41_2025_04_14`, `Gpt41Mini_2025_04_14`, `Gpt41Nano_2025_04_14`, `Gpt4oMini_2024_07_18`, `Gpt4o_2024_08_06`, `Gpt4_0613`, `Gpt35Turbo_0125`, `Babbage002`, `Davinci002`, etc. |
-| `ImageModel` | Images | `GptImage1` (default), `GptImage1Mini`, `GptImage1_5`, `GptImage2`, `ChatGptImageLatest`, `DallE2`/`DallE3` (retired on OpenAI; Azure only) |
+| `ImageModel` | Images | `GptImage1` (default), `GptImage1Mini`, `GptImage1_5`, `GptImage2`, `GptImage2_5Flare`, `GptImage2_5Sunburst`, `ChatGptImageLatest`, `DallE2`/`DallE3` (retired on OpenAI; Azure only) |
 | `VideoModel` | Videos | `Sora2` (default), `Sora2Pro` |
 
 ```rust
@@ -747,9 +747,9 @@ Each API (Chat, Embedding, etc.) requires its own complete endpoint URL includin
 - Detailed category scores
 
 **Images API Features:**
-- Image generation (GPT Image 1 / 1 Mini / 1.5 / 2)
+- Image generation (GPT Image 1 / 1 Mini / 1.5 / 2 / 2.5 Flare / 2.5 Sunburst)
 - **DALL-E retired**: `dall-e-2`/`dall-e-3` no longer exist on `api.openai.com` (the API returns "The model 'dall-e-3' does not exist."). The enum variants remain for Azure deployments. `ImageModel::default()` is `GptImage1`.
-- GPT Image models reject `response_format` and `style` (`unknown_parameter`) and always return base64; `quality` must be `low`/`medium`/`high`/`auto`, not `standard`/`hd`
+- GPT Image models reject `response_format` and `style` (`unknown_parameter`) and always return base64; `quality` must be `low`/`medium`/`high`/`auto` (GPT Image 2.5 also accepts `max`), not `standard`/`hd`
 - Image editing with masks
 - Image variations (DALL-E 2 only)
 - URL or base64 response format

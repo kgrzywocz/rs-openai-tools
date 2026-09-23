@@ -72,6 +72,33 @@ pub enum ImageModel {
     /// GPT Image 2 - state-of-the-art generation and editing
     #[serde(rename = "gpt-image-2")]
     GptImage2,
+    /// GPT Image 2.5 Flare - fast, everyday image generation and editing
+    ///
+    /// Has approximately 50% lower latency than GPT Image 2. It has the same
+    /// pricing as GPT Image 2.5 Sunburst.
+    ///
+    /// Accepts `low`, `medium`, `high`, `auto`, and `max` quality, but rejects
+    /// DALL-E's `standard` and `hd` values. Although `max` is accepted, API
+    /// validation errors only list `low`, `medium`, `high`, and `auto`.
+    /// `response_format` and `style` are unknown parameters and responses are
+    /// always base64. The API accepts `output_format: webp` and
+    /// `background: transparent`.
+    #[serde(rename = "gpt-image-2.5-flare")]
+    GptImage2_5Flare,
+    /// GPT Image 2.5 Sunburst - generation and finely controlled editing
+    ///
+    /// Has the same pricing as GPT Image 2.5 Flare. At `max` quality, one
+    /// generation can take more than 60 seconds; configure a longer timeout
+    /// when using request timeouts.
+    ///
+    /// Accepts `low`, `medium`, `high`, `auto`, and `max` quality, but rejects
+    /// DALL-E's `standard` and `hd` values. Although `max` is accepted, API
+    /// validation errors only list `low`, `medium`, `high`, and `auto`.
+    /// `response_format` and `style` are unknown parameters and responses are
+    /// always base64. The API accepts `output_format: webp` and
+    /// `background: transparent`.
+    #[serde(rename = "gpt-image-2.5-sunburst")]
+    GptImage2_5Sunburst,
     /// ChatGPT Image Latest - image model currently used in ChatGPT
     ///
     /// Requires a verified organization.
@@ -89,6 +116,8 @@ impl ImageModel {
             Self::GptImage1Mini => "gpt-image-1-mini",
             Self::GptImage1_5 => "gpt-image-1.5",
             Self::GptImage2 => "gpt-image-2",
+            Self::GptImage2_5Flare => "gpt-image-2.5-flare",
+            Self::GptImage2_5Sunburst => "gpt-image-2.5-sunburst",
             Self::ChatGptImageLatest => "chatgpt-image-latest",
         }
     }
@@ -155,9 +184,10 @@ impl std::fmt::Display for ImageSize {
 
 /// Image quality options.
 ///
-/// `Standard` and `Hd` apply to DALL-E 3. The GPT Image models
-/// (`gpt-image-1`, `gpt-image-1-mini`, `gpt-image-2`) use
-/// `Low`/`Medium`/`High`/`Auto` instead.
+/// `Standard` and `Hd` apply to DALL-E 3. The GPT Image models use
+/// `Low`/`Medium`/`High`/`Auto` instead. GPT Image 2.5 Flare and Sunburst also
+/// accept `Max`; the API's validation error omits `max` from its list of
+/// allowed values even though requests using it succeed.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
 #[serde(rename_all = "lowercase")]
 #[non_exhaustive]
@@ -173,6 +203,8 @@ pub enum ImageQuality {
     Medium,
     /// High quality (GPT Image models)
     High,
+    /// Highest quality (GPT Image 2.5 models only)
+    Max,
     /// Let the model pick the quality (GPT Image models)
     Auto,
 }
@@ -186,6 +218,7 @@ impl ImageQuality {
             Self::Low => "low",
             Self::Medium => "medium",
             Self::High => "high",
+            Self::Max => "max",
             Self::Auto => "auto",
         }
     }
@@ -243,7 +276,8 @@ pub struct GenerateOptions {
     /// Image quality
     ///
     /// DALL-E 3 takes `standard`/`hd`; the GPT Image models take
-    /// `low`/`medium`/`high`/`auto` and reject the DALL-E values.
+    /// `low`/`medium`/`high`/`auto` and reject the DALL-E values. GPT Image 2.5
+    /// models additionally accept `max`.
     pub quality: Option<ImageQuality>,
     /// Response format (URL or base64)
     ///
@@ -266,7 +300,7 @@ pub struct GenerateOptions {
 pub struct EditOptions {
     /// Path to the mask image (transparent areas will be edited)
     pub mask: Option<String>,
-    /// The model to use (only DALL-E 2 supports editing)
+    /// The model to use (GPT Image models and DALL-E 2 support editing)
     pub model: Option<ImageModel>,
     /// Number of images to generate (1-10)
     pub n: Option<u32>,
@@ -712,12 +746,19 @@ mod tests {
     #[test]
     fn test_new_image_models_as_str() {
         assert_eq!(ImageModel::GptImage2.as_str(), "gpt-image-2");
+        assert_eq!(ImageModel::GptImage2_5Flare.as_str(), "gpt-image-2.5-flare");
+        assert_eq!(ImageModel::GptImage2_5Sunburst.as_str(), "gpt-image-2.5-sunburst");
         assert_eq!(ImageModel::GptImage1Mini.as_str(), "gpt-image-1-mini");
     }
 
     #[test]
     fn test_new_image_models_serialization() {
-        for (model, expected) in [(ImageModel::GptImage2, "gpt-image-2"), (ImageModel::GptImage1Mini, "gpt-image-1-mini")] {
+        for (model, expected) in [
+            (ImageModel::GptImage2, "gpt-image-2"),
+            (ImageModel::GptImage2_5Flare, "gpt-image-2.5-flare"),
+            (ImageModel::GptImage2_5Sunburst, "gpt-image-2.5-sunburst"),
+            (ImageModel::GptImage1Mini, "gpt-image-1-mini"),
+        ] {
             let json = serde_json::to_string(&model).unwrap();
             assert_eq!(json, format!("\"{}\"", expected), "Wrong serialization for {:?}", model);
             let deserialized: ImageModel = serde_json::from_str(&json).unwrap();
@@ -739,12 +780,13 @@ mod tests {
     }
 
     /// GPT Image models take `low`/`medium`/`high`/`auto` instead of the
-    /// DALL-E 3 `standard`/`hd` pair.
+    /// DALL-E 3 `standard`/`hd` pair; GPT Image 2.5 also accepts `max`.
     #[test]
     fn test_gpt_image_quality_values() {
         assert_eq!(ImageQuality::Low.as_str(), "low");
         assert_eq!(ImageQuality::Medium.as_str(), "medium");
         assert_eq!(ImageQuality::High.as_str(), "high");
+        assert_eq!(ImageQuality::Max.as_str(), "max");
         assert_eq!(ImageQuality::Auto.as_str(), "auto");
 
         // The DALL-E 3 values must keep working.
@@ -758,6 +800,7 @@ mod tests {
             (ImageQuality::Low, "low"),
             (ImageQuality::Medium, "medium"),
             (ImageQuality::High, "high"),
+            (ImageQuality::Max, "max"),
             (ImageQuality::Auto, "auto"),
             (ImageQuality::Standard, "standard"),
             (ImageQuality::Hd, "hd"),
