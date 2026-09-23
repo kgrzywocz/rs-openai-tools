@@ -119,7 +119,7 @@ impl ParameterSupport {
         }
     }
 
-    /// Creates parameter support info for reasoning models (GPT-5, o-series).
+    /// Creates parameter support info for reasoning models (GPT-6, GPT-5, o-series).
     ///
     /// Reasoning models have restricted parameter support:
     /// - temperature: only 1.0
@@ -161,7 +161,12 @@ impl ParameterSupport {
 ///
 /// # Model Categories
 ///
-/// ## GPT-5 Series (Latest Flagship)
+/// ## GPT-6 Series (Latest Flagship)
+/// - [`Gpt6Astra`]: Flagship model ($10 input / $50 output per million tokens)
+/// - [`Gpt6Sol`]: Complex coding and professional tasks ($2 / $10)
+/// - [`Gpt6Luna`]: High-volume routine tasks ($0.10 / $0.50)
+///
+/// ## GPT-5 Series
 /// - [`Gpt5_2`]: GPT-5.2 Thinking - flagship model for coding and agentic tasks
 /// - [`Gpt5_2ChatLatest`]: GPT-5.2 Instant - fast workhorse for everyday work
 /// - [`Gpt5_2Pro`]: GPT-5.2 Pro - smartest for difficult questions (Responses API only)
@@ -186,17 +191,18 @@ impl ParameterSupport {
 ///
 /// # Reasoning Model Restrictions
 ///
-/// Reasoning models (GPT-5 series, o1, o3, o4 series) have parameter restrictions:
+/// Reasoning models (GPT-6, GPT-5, o1, o3, o4 series) have parameter restrictions:
 /// - `temperature`: Only 1.0 supported
 /// - `top_p`: Only 1.0 supported
 /// - `frequency_penalty`: Only 0 supported
 /// - `presence_penalty`: Only 0 supported
 ///
-/// GPT-5 models support `reasoning.effort` parameter:
+/// GPT-6 and GPT-5 models support the `reasoning.effort` parameter:
 /// - `none`: No reasoning (GPT-5.1 default)
 /// - `minimal`: Very few reasoning tokens
 /// - `low`, `medium`, `high`: Increasing reasoning depth
-/// - `xhigh`: Maximum reasoning (GPT-5.2 Pro, GPT-5.1 Codex Max)
+/// - `xhigh`: Extra-high reasoning
+/// - `max`: Maximum reasoning (GPT-6 series, Responses API only)
 ///
 /// # Example
 ///
@@ -217,7 +223,32 @@ impl ParameterSupport {
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize, Default)]
 #[non_exhaustive]
 pub enum ChatModel {
-    // === GPT-5.6 Series (Latest Flagship) ===
+    // === GPT-6 Series (Latest Flagship) ===
+    /// GPT-6 Astra - Flagship model
+    ///
+    /// - Pricing: $10 input / $50 output per million tokens
+    /// - Supports Chat Completions and Responses APIs
+    /// - Responses reasoning effort: low, medium, high, xhigh, max
+    #[serde(rename = "gpt-6-astra")]
+    Gpt6Astra,
+
+    /// GPT-6 Sol - For coding and other complex tasks
+    ///
+    /// - Pricing: $2 input / $10 output per million tokens
+    /// - Supports Chat Completions and Responses APIs
+    /// - Responses reasoning effort: none, low, medium, high, xhigh, max
+    #[serde(rename = "gpt-6-sol")]
+    Gpt6Sol,
+
+    /// GPT-6 Luna - For high-volume routine processing
+    ///
+    /// - Pricing: $0.10 input / $0.50 output per million tokens
+    /// - Supports Chat Completions and Responses APIs
+    /// - Responses reasoning effort: none, low, medium, high, xhigh, max
+    #[serde(rename = "gpt-6-luna")]
+    Gpt6Luna,
+
+    // === GPT-5.6 Series ===
     /// GPT-5.6 - Alias routing to GPT-5.6 Sol
     #[serde(rename = "gpt-5.6")]
     Gpt5_6,
@@ -506,6 +537,10 @@ impl ChatModel {
     /// ```
     pub fn as_str(&self) -> &str {
         match self {
+            // GPT-6 Series
+            Self::Gpt6Astra => "gpt-6-astra",
+            Self::Gpt6Sol => "gpt-6-sol",
+            Self::Gpt6Luna => "gpt-6-luna",
             // GPT-5.6 Series
             Self::Gpt5_6 => "gpt-5.6",
             Self::Gpt5_6Sol => "gpt-5.6-sol",
@@ -572,7 +607,7 @@ impl ChatModel {
 
     /// Checks if this is a reasoning model with parameter restrictions.
     ///
-    /// Reasoning models (GPT-5 series, o1, o3, o4 series) only support:
+    /// Reasoning models (GPT-6, GPT-5, o1, o3, o4 series) only support:
     /// - `temperature = 1.0`
     /// - `top_p = 1.0`
     /// - `frequency_penalty = 0`
@@ -591,6 +626,8 @@ impl ChatModel {
     pub fn is_reasoning_model(&self) -> bool {
         matches!(
             self,
+            // GPT-6 series
+            Self::Gpt6Astra | Self::Gpt6Sol | Self::Gpt6Luna |
             // GPT-5.6 series
             Self::Gpt5_6 | Self::Gpt5_6Sol | Self::Gpt5_6Terra | Self::Gpt5_6Luna |
             // GPT-5.5 series
@@ -694,6 +731,10 @@ impl std::fmt::Display for ChatModel {
 impl From<&str> for ChatModel {
     fn from(s: &str) -> Self {
         match s {
+            // GPT-6 Series
+            "gpt-6-astra" => Self::Gpt6Astra,
+            "gpt-6-sol" => Self::Gpt6Sol,
+            "gpt-6-luna" => Self::Gpt6Luna,
             // GPT-5.6 Series
             "gpt-5.6" => Self::Gpt5_6,
             "gpt-5.6-sol" => Self::Gpt5_6Sol,
@@ -1594,16 +1635,20 @@ mod tests {
     }
 
     // ========================================================================
-    // GPT-5.3 / 5.4 / 5.5 / 5.6 series and Codex models
+    // GPT-5.3 / 5.4 / 5.5 / 5.6, GPT-6 series, and Codex models
     //
     // Model IDs and capabilities verified against the OpenAI API reference
-    // (https://developers.openai.com/api/docs/models), August 2026.
+    // (https://developers.openai.com/api/docs/models), September 2026.
     // ========================================================================
 
-    /// Every model ID added for the GPT-5.3 through GPT-5.6 generations, paired
+    /// Every model ID added for the GPT-5.3 through GPT-6 generations, paired
     /// with the exact string the API expects.
-    fn gpt5_3_to_5_6_models() -> Vec<(ChatModel, &'static str)> {
+    fn new_chat_models() -> Vec<(ChatModel, &'static str)> {
         vec![
+            // GPT-6 series has no `gpt-6` alias.
+            (ChatModel::Gpt6Astra, "gpt-6-astra"),
+            (ChatModel::Gpt6Sol, "gpt-6-sol"),
+            (ChatModel::Gpt6Luna, "gpt-6-luna"),
             // GPT-5.6 series: `gpt-5.6` is a documented alias routing to Sol.
             (ChatModel::Gpt5_6, "gpt-5.6"),
             (ChatModel::Gpt5_6Sol, "gpt-5.6-sol"),
@@ -1628,23 +1673,25 @@ mod tests {
 
     #[test]
     fn test_new_chat_models_as_str() {
-        for (model, expected) in gpt5_3_to_5_6_models() {
+        for (model, expected) in new_chat_models() {
             assert_eq!(model.as_str(), expected, "Wrong model ID for {:?}", model);
         }
     }
 
     #[test]
     fn test_new_chat_models_from_str_roundtrip() {
-        for (model, model_str) in gpt5_3_to_5_6_models() {
+        for (model, model_str) in new_chat_models() {
             assert_eq!(ChatModel::from(model_str), model, "Failed to parse {}", model_str);
             // A known model must never fall through to Custom.
             assert_eq!(ChatModel::from(model_str).as_str(), model_str, "Roundtrip failed for {}", model_str);
         }
+
+        assert!(matches!(ChatModel::from("gpt-6"), ChatModel::Custom(_)), "gpt-6 must not be treated as an API model alias");
     }
 
     #[test]
     fn test_new_chat_models_serialization_roundtrip() {
-        for (model, model_str) in gpt5_3_to_5_6_models() {
+        for (model, model_str) in new_chat_models() {
             let json = serde_json::to_string(&model).unwrap();
             assert_eq!(json, format!("\"{}\"", model_str), "Wrong serialization for {:?}", model);
             let deserialized: ChatModel = serde_json::from_str(&json).unwrap();
@@ -1652,11 +1699,14 @@ mod tests {
         }
     }
 
-    /// Every GPT-5.4/5.5/5.6 and Codex model documents "reasoning token
+    /// Every GPT-5.4/5.5/5.6, GPT-6, and Codex model documents "reasoning token
     /// support", so they carry the reasoning-model parameter restrictions.
     #[test]
-    fn test_new_gpt5_models_are_reasoning_models() {
+    fn test_new_models_are_reasoning_models() {
         let reasoning = vec![
+            ChatModel::Gpt6Astra,
+            ChatModel::Gpt6Sol,
+            ChatModel::Gpt6Luna,
             ChatModel::Gpt5_6,
             ChatModel::Gpt5_6Sol,
             ChatModel::Gpt5_6Terra,

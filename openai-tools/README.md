@@ -139,7 +139,7 @@ runtime `model_not_found`.
 
 | Enum | API | Variants |
 |------|-----|----------|
-| `ChatModel` | Chat, Responses | **GPT-5.6**: `Gpt5_6` (alias to Sol), `Gpt5_6Sol`, `Gpt5_6Terra`, `Gpt5_6Luna`<br>**GPT-5.5**: `Gpt5_5`, `Gpt5_5Pro`<br>**GPT-5.4**: `Gpt5_4`, `Gpt5_4Pro`, `Gpt5_4Mini`, `Gpt5_4Nano`<br>**GPT-5.3**: `Gpt5_3ChatLatest`<br>**Codex**: `Gpt5_3Codex`, `Gpt5_2Codex`, `Gpt5_1Codex`, `Gpt5_1CodexMax`<br>**GPT-5**: `Gpt5`, `Gpt5Pro`, `Gpt5_2`, `Gpt5_2ChatLatest`, `Gpt5_2Pro`, `Gpt5_1`, `Gpt5_1ChatLatest`, `Gpt5Mini`, `Gpt5Nano`<br>**Search**: `Gpt5SearchApi`, `Gpt4oSearchPreview`, `Gpt4oMiniSearchPreview`<br>**Audio**: `GptAudio`, `GptAudio1_5`, `GptAudioMini`<br>**GPT-4.1 / 4o / 4 / 3.5**: `Gpt4_1`, `Gpt4_1Mini`, `Gpt4_1Nano`, `Gpt4o`, `Gpt4oMini`, `Gpt4oAudioPreview`, `Gpt4Turbo`, `Gpt4`, `Gpt3_5Turbo`, `Gpt3_5Turbo16k`<br>**o-series**: `O1`, `O1Pro`, `O3`, `O3Pro`, `O3Mini`, `O4Mini`<br>`Custom(String)` |
+| `ChatModel` | Chat, Responses | **GPT-6**: `Gpt6Astra`, `Gpt6Sol`, `Gpt6Luna`<br>**GPT-5.6**: `Gpt5_6` (alias to Sol), `Gpt5_6Sol`, `Gpt5_6Terra`, `Gpt5_6Luna`<br>**GPT-5.5**: `Gpt5_5`, `Gpt5_5Pro`<br>**GPT-5.4**: `Gpt5_4`, `Gpt5_4Pro`, `Gpt5_4Mini`, `Gpt5_4Nano`<br>**GPT-5.3**: `Gpt5_3ChatLatest`<br>**Codex**: `Gpt5_3Codex`, `Gpt5_2Codex`, `Gpt5_1Codex`, `Gpt5_1CodexMax`<br>**GPT-5**: `Gpt5`, `Gpt5Pro`, `Gpt5_2`, `Gpt5_2ChatLatest`, `Gpt5_2Pro`, `Gpt5_1`, `Gpt5_1ChatLatest`, `Gpt5Mini`, `Gpt5Nano`<br>**Search**: `Gpt5SearchApi`, `Gpt4oSearchPreview`, `Gpt4oMiniSearchPreview`<br>**Audio**: `GptAudio`, `GptAudio1_5`, `GptAudioMini`<br>**GPT-4.1 / 4o / 4 / 3.5**: `Gpt4_1`, `Gpt4_1Mini`, `Gpt4_1Nano`, `Gpt4o`, `Gpt4oMini`, `Gpt4oAudioPreview`, `Gpt4Turbo`, `Gpt4`, `Gpt3_5Turbo`, `Gpt3_5Turbo16k`<br>**o-series**: `O1`, `O1Pro`, `O3`, `O3Pro`, `O3Mini`, `O4Mini`<br>`Custom(String)` |
 | `EmbeddingModel` | Embedding | `TextEmbedding3Small`, `TextEmbedding3Large`, `TextEmbeddingAda002` |
 | `RealtimeModel` | Realtime | `GptRealtime2_1`, `GptRealtime2_1Mini`, `GptRealtime2`, `GptRealtime1_5`, `GptRealtime`, `GptRealtimeMini`, `GptRealtimeTranslate`, `GptRealtime_2025_08_28` (default), `Custom(String)` |
 | `ImageModel` | Images | `GptImage1` (default), `GptImage1Mini`, `GptImage1_5`, `GptImage2`, `ChatGptImageLatest`, `DallE2`, `DallE3` |
@@ -151,8 +151,8 @@ runtime `model_not_found`.
 ```rust
 use openai_tools::common::models::ChatModel;
 
-chat.model(ChatModel::Gpt5_6Sol);                    // Latest flagship
-chat.model(ChatModel::Gpt5_6Luna);                   // Most cost-efficient
+chat.model(ChatModel::Gpt6Astra);                    // Latest flagship
+chat.model(ChatModel::Gpt6Luna);                     // Most cost-efficient
 responses.model(ChatModel::Gpt5_5Pro);               // Responses API only
 chat.model(ChatModel::custom("ft:gpt-4.1-mini:my-org::abc123"));  // Fine-tuned
 ```
@@ -165,7 +165,7 @@ The library validates parameters per model and drops unsupported ones with a
 | Family | `temperature` / `top_p` / `n` / penalties | `reasoning` | Detect with |
 |--------|:--:|:--:|---|
 | Standard (GPT-4o, GPT-4.1, `gpt-audio`, ...) | Yes | No | - |
-| Reasoning (GPT-5.x, `*-codex`, o-series) | No (fixed) | Yes | `is_reasoning_model()` |
+| Reasoning (GPT-6, GPT-5.x, `*-codex`, o-series) | No (fixed) | Yes | `is_reasoning_model()` |
 | Search (`gpt-5-search-api`, `gpt-4o-*-search-preview`) | No (fixed) | No | `is_search_model()` |
 
 Two things are easy to get wrong here:

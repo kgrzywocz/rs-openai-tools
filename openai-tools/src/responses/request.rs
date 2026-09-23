@@ -97,6 +97,8 @@ pub enum Include {
 ///
 /// | Model | Supported Values |
 /// |-------|-----------------|
+/// | GPT-6 Astra | `low`, `medium`, `high`, `xhigh`, `max` |
+/// | GPT-6 Sol, GPT-6 Luna | `none`, `low`, `medium`, `high`, `xhigh`, `max` |
 /// | GPT-5.2, GPT-5.2-pro | `none`, `low`, `medium`, `high`, `xhigh` |
 /// | GPT-5.1 | `none`, `low`, `medium`, `high` |
 /// | GPT-5-mini | `minimal`, `medium`, `high` |
@@ -152,6 +154,15 @@ pub enum ReasoningEffort {
     #[strum(serialize = "xhigh")]
     #[serde(rename = "xhigh")]
     Xhigh,
+
+    /// Maximum reasoning effort for GPT-6 models
+    ///
+    /// Responses API only. Accepted by GPT-6 Astra, GPT-6 Sol, and GPT-6 Luna
+    /// (`gpt-6-astra`, `gpt-6-sol`, and `gpt-6-luna`). Chat Completions rejects
+    /// `max` in its `reasoning_effort` parameter, including for GPT-6 models.
+    #[strum(serialize = "max")]
+    #[serde(rename = "max")]
+    Max,
 }
 
 /// Defines the format of reasoning summary to include in the response
@@ -1756,7 +1767,7 @@ impl Responses {
     ///   - 1.0: Default balanced behavior
     ///   - 2.0: Most random and creative responses
     ///
-    /// **Note:** Reasoning models (GPT-5, o-series) only support temperature=1.0.
+    /// **Note:** Reasoning models (GPT-6, GPT-5, o-series) only support temperature=1.0.
     /// For these models, other values will be ignored with a warning.
     ///
     /// # Panics
@@ -2401,7 +2412,7 @@ impl Responses {
     ///
     /// Higher values increase response size and may affect latency.
     ///
-    /// **Note:** Reasoning models (GPT-5, o-series) do not support top_logprobs.
+    /// **Note:** Reasoning models (GPT-6, GPT-5, o-series) do not support top_logprobs.
     /// For these models, this parameter will be ignored with a warning.
     ///
     /// # Examples
@@ -2453,7 +2464,7 @@ impl Responses {
     /// - Low top_p + Low temperature = Very focused responses
     /// - High top_p + High temperature = Very creative responses
     ///
-    /// **Note:** Reasoning models (GPT-5, o-series) only support top_p=1.0.
+    /// **Note:** Reasoning models (GPT-6, GPT-5, o-series) only support top_p=1.0.
     /// For these models, other values will be ignored with a warning.
     ///
     /// # Examples
@@ -2566,7 +2577,7 @@ impl Responses {
     ///
     /// # Parameter Validation
     ///
-    /// For reasoning models (GPT-5, o-series), certain parameters have restrictions:
+    /// For reasoning models (GPT-6, GPT-5, o-series), certain parameters have restrictions:
     /// - `temperature`: only 1.0 supported
     /// - `top_p`: only 1.0 supported
     /// - `top_logprobs`: not supported
@@ -3069,5 +3080,17 @@ impl Responses {
                 serde_json::from_str::<InputTokensResponse>(&content).map_err(OpenAIToolError::SerdeJsonError)
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::ReasoningEffort;
+
+    #[test]
+    fn reasoning_effort_max_serializes_as_max() {
+        assert_eq!(serde_json::to_string(&ReasoningEffort::Max).unwrap(), "\"max\"");
+        assert_eq!(ReasoningEffort::Max.to_string(), "max");
+        assert_eq!("max".parse::<ReasoningEffort>().unwrap(), ReasoningEffort::Max);
     }
 }

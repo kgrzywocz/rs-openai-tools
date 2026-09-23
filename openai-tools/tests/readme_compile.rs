@@ -83,8 +83,8 @@ async fn videos_other_sample() -> Result<(), Box<dyn std::error::Error>> {
 #[allow(dead_code, unused_variables)]
 fn model_selection_sample() {
     let mut chat = ChatCompletion::new();
-    chat.model(ChatModel::Gpt5_6Sol);
-    chat.model(ChatModel::Gpt5_6Luna);
+    chat.model(ChatModel::Gpt6Astra);
+    chat.model(ChatModel::Gpt6Luna);
     chat.model(ChatModel::custom("ft:gpt-4.1-mini:my-org::abc123"));
 
     let mut responses = Responses::new();

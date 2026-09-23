@@ -263,7 +263,7 @@ Note: a catch-all variant holding a `String` is incompatible with `#[derive(Copy
 
 | Enum | API | Available Variants |
 |------|-----|-------------------|
-| `ChatModel` | Chat, Responses | **GPT-5.6**: `Gpt5_6` (alias→Sol), `Gpt5_6Sol`, `Gpt5_6Terra`, `Gpt5_6Luna` / **GPT-5.5**: `Gpt5_5`, `Gpt5_5Pro` / **GPT-5.4**: `Gpt5_4`, `Gpt5_4Pro`, `Gpt5_4Mini`, `Gpt5_4Nano` / **GPT-5.3**: `Gpt5_3ChatLatest` / **Codex**: `Gpt5_3Codex`, `Gpt5_2Codex`, `Gpt5_1Codex`, `Gpt5_1CodexMax` / **GPT-5**: `Gpt5`, `Gpt5Pro`, `Gpt5_2`, `Gpt5_2ChatLatest`, `Gpt5_2Pro`, `Gpt5_1`, `Gpt5_1ChatLatest`, `Gpt5Mini`, `Gpt5Nano` / **Search**: `Gpt5SearchApi`, `Gpt4oSearchPreview`, `Gpt4oMiniSearchPreview` / **Audio**: `GptAudio`, `GptAudio1_5`, `GptAudioMini` / **GPT-4.1**: `Gpt4_1`, `Gpt4_1Mini`, `Gpt4_1Nano` / **GPT-4o**: `Gpt4o`, `Gpt4oMini`, `Gpt4oAudioPreview` / **GPT-4/3.5**: `Gpt4Turbo`, `Gpt4`, `Gpt3_5Turbo`, `Gpt3_5Turbo16k` / **Reasoning**: `O1`, `O1Pro`, `O3`, `O3Pro`, `O3Mini`, `O4Mini` / `Custom(String)` |
+| `ChatModel` | Chat, Responses | **GPT-6**: `Gpt6Astra`, `Gpt6Sol`, `Gpt6Luna` / **GPT-5.6**: `Gpt5_6` (alias→Sol), `Gpt5_6Sol`, `Gpt5_6Terra`, `Gpt5_6Luna` / **GPT-5.5**: `Gpt5_5`, `Gpt5_5Pro` / **GPT-5.4**: `Gpt5_4`, `Gpt5_4Pro`, `Gpt5_4Mini`, `Gpt5_4Nano` / **GPT-5.3**: `Gpt5_3ChatLatest` / **Codex**: `Gpt5_3Codex`, `Gpt5_2Codex`, `Gpt5_1Codex`, `Gpt5_1CodexMax` / **GPT-5**: `Gpt5`, `Gpt5Pro`, `Gpt5_2`, `Gpt5_2ChatLatest`, `Gpt5_2Pro`, `Gpt5_1`, `Gpt5_1ChatLatest`, `Gpt5Mini`, `Gpt5Nano` / **Search**: `Gpt5SearchApi`, `Gpt4oSearchPreview`, `Gpt4oMiniSearchPreview` / **Audio**: `GptAudio`, `GptAudio1_5`, `GptAudioMini` / **GPT-4.1**: `Gpt4_1`, `Gpt4_1Mini`, `Gpt4_1Nano` / **GPT-4o**: `Gpt4o`, `Gpt4oMini`, `Gpt4oAudioPreview` / **GPT-4/3.5**: `Gpt4Turbo`, `Gpt4`, `Gpt3_5Turbo`, `Gpt3_5Turbo16k` / **Reasoning**: `O1`, `O1Pro`, `O3`, `O3Pro`, `O3Mini`, `O4Mini` / `Custom(String)` |
 | `EmbeddingModel` | Embedding | `TextEmbedding3Small`, `TextEmbedding3Large`, `TextEmbeddingAda002` |
 | `RealtimeModel` | Realtime | `GptRealtime2_1`, `GptRealtime2_1Mini`, `GptRealtime2`, `GptRealtime1_5`, `GptRealtime`, `GptRealtimeMini`, `GptRealtimeTranslate`, `GptRealtime_2025_08_28` (default), `Custom(String)` |
 | `FineTuningModel` | Fine-tuning | `Gpt41_2025_04_14`, `Gpt41Mini_2025_04_14`, `Gpt41Nano_2025_04_14`, `Gpt4oMini_2024_07_18`, `Gpt4o_2024_08_06`, `Gpt4_0613`, `Gpt35Turbo_0125`, `Babbage002`, `Davinci002`, etc. |
@@ -695,7 +695,7 @@ Each API (Chat, Embedding, etc.) requires its own complete endpoint URL includin
 
 **Responses API Features:**
 - Multi-modal input support (text, images)
-- Configurable reasoning with `ReasoningEffort` (none, minimal, low, medium, high, xhigh) and `ReasoningSummary` (auto, concise, detailed)
+- Configurable reasoning with `ReasoningEffort` (none, minimal, low, medium, high, xhigh, max) and `ReasoningSummary` (auto, concise, detailed)
 - Input truncation behavior with `Truncation` (Auto, Disabled)
 - Tool choice control with `ToolChoice` (auto, none, required, or specific function)
 - Prompt templates with `Prompt` (ID and variable substitution)
@@ -796,9 +796,9 @@ Each API (Chat, Embedding, etc.) requires its own complete endpoint URL includin
 
 ## Model-Specific Parameter Restrictions
 
-### Reasoning Models (GPT-5 Series, o1, o3, o4 Series)
+### Reasoning Models (GPT-6 Series, GPT-5 Series, o1, o3, o4 Series)
 
-OpenAI's reasoning models (GPT-5 series: `gpt-5.6-*`, `gpt-5.5`, `gpt-5.4`, `gpt-5.2`, `gpt-5.1`, `gpt-5-mini`, the `*-codex` models, and o-series: `o1`, `o3`, `o3-mini`, `o4-mini`, etc.) have specific parameter restrictions. This library automatically handles these restrictions by ignoring unsupported parameters and logging warnings.
+OpenAI's reasoning models (GPT-6 series: `gpt-6-*`, GPT-5 series: `gpt-5.6-*`, `gpt-5.5`, `gpt-5.4`, `gpt-5.2`, `gpt-5.1`, `gpt-5-mini`, the `*-codex` models, and o-series: `o1`, `o3`, `o3-mini`, `o4-mini`, etc.) have specific parameter restrictions. This library automatically handles these restrictions by ignoring unsupported parameters and logging warnings.
 
 **Exception — `*-chat-latest` models**: `gpt-5.1-chat-latest`, `gpt-5.2-chat-latest` and `gpt-5.3-chat-latest` point at the non-reasoning "Instant" snapshots used in ChatGPT. They accept the **full standard parameter set** (`temperature`, `top_p`, `n`, `logprobs`, …), so `is_reasoning_model()` returns `false` for them and no parameters are dropped.
 
@@ -817,7 +817,7 @@ use openai_tools::common::models::ChatModel;
 let mut responses = Responses::new();
 responses.model(ChatModel::Gpt5_2)
     .reasoning(Reasoning {
-        effort: Some(ReasoningEffort::High),    // none, minimal, low, medium, high, xhigh
+        effort: Some(ReasoningEffort::High),    // none, minimal, low, medium, high, xhigh, max
         summary: Some(ReasoningSummary::Auto),  // auto, concise, detailed
     })
     .str_message("Solve this complex problem...")
@@ -834,6 +834,7 @@ responses.model(ChatModel::Gpt5_2)
 | `Medium` | Balanced reasoning | All reasoning models |
 | `High` | Deep reasoning | All reasoning models |
 | `Xhigh` | Maximum reasoning | GPT-5.2 Pro, GPT-5.1 Codex Max |
+| `Max` | Maximum reasoning (Responses API only) | GPT-6 series |
 
 #### Chat Completions API Parameter Restrictions
 
