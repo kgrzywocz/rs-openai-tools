@@ -873,15 +873,15 @@ OpenAI's reasoning models (GPT-6 series: `gpt-6-*`, GPT-5 series: `gpt-5.6-*`, `
 GPT-5 models support configurable reasoning effort via the `reasoning` parameter (Responses API only):
 
 ```rust
-use openai_tools::responses::request::{Responses, Reasoning, ReasoningEffort, ReasoningSummary};
+use openai_tools::responses::request::{Responses, ReasoningEffort, ReasoningSummary};
 use openai_tools::common::models::ChatModel;
 
 let mut responses = Responses::new();
 responses.model(ChatModel::Gpt5_2)
-    .reasoning(Reasoning {
-        effort: Some(ReasoningEffort::High),    // none, minimal, low, medium, high, xhigh, max
-        summary: Some(ReasoningSummary::Auto),  // auto, concise, detailed
-    })
+    .reasoning(
+        ReasoningEffort::High,  // none, minimal, low, medium, high, xhigh, max
+        ReasoningSummary::Auto, // auto, concise, detailed
+    )
     .str_message("Solve this complex problem...")
     .complete()
     .await?;
