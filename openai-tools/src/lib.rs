@@ -32,7 +32,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! openai-tools = "1.0"
+//! openai-tools = "3.1"
 //! tokio = { version = "1.0", features = ["full"] }
 //! serde = { version = "1.0", features = ["derive"] }
 //! ```
