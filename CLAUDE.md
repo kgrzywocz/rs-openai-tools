@@ -29,6 +29,7 @@ cargo nextest run --test chat_integration
 cargo nextest run --test responses_integration
 cargo nextest run --test embedding_integration
 cargo nextest run --test realtime_integration
+cargo nextest run --test live_integration
 cargo nextest run --test models_integration
 cargo nextest run --test models_by_version_integration
 cargo nextest run --test files_integration
@@ -81,6 +82,7 @@ rs-openai-tools/
         ├── conversations/ # Conversations API
         ├── embedding/  # Embeddings API
         ├── realtime/   # Realtime API (WebSocket)
+        ├── live/       # Live API (Primary WebSocket and Fork)
         ├── models/     # Models API
         ├── files/      # Files API
         ├── moderations/ # Moderations API
@@ -120,6 +122,12 @@ rs-openai-tools/
   - `events/server.rs`: Server-to-client events (28 types)
   - `stream.rs`: `EventHandler` for callback-based processing
 
+- **`live/`**: Live API (Primary WebSocket and Fork, `wss://api.openai.com/v1/live/sessions`)
+  - `client.rs`: `LiveClient` builder, Primary WebSocket/Fork connections, and `LiveSession`/`LiveSender`/`LiveReceiver`
+  - `session.rs`: Session configuration, audio formats, voices, and delegation configuration
+  - `events.rs`: Client-to-server and server-to-client events
+  - Supports OpenAI authentication only; WebRTC session creation, sideband attach, SIP, `transport.*` events, and recording download are not supported
+
 - **`models/`**: Models API (`/v1/models`)
   - `request.rs`: `Models` client for list, retrieve, delete
   - `response.rs`: `Model`, `ModelsListResponse`, `DeleteResponse`
@@ -157,7 +165,7 @@ rs-openai-tools/
   - `client.rs`: HTTP client utilities with timeout configuration (`create_http_client`)
   - `message.rs`: `Message`, `Content`, `ToolCall`
   - `role.rs`: `Role` enum (User, Assistant, System, Tool)
-  - `models.rs`: Type-safe model enums (`ChatModel`, `EmbeddingModel`, `RealtimeModel`, `FineTuningModel`) and `ParameterSupport`/`ParameterRestriction` for model parameter validation
+  - `models.rs`: Type-safe model enums (`ChatModel`, `EmbeddingModel`, `RealtimeModel`, `LiveModel`, `FineTuningModel`) and `ParameterSupport`/`ParameterRestriction` for model parameter validation
   - `tool.rs`: `Tool` definition for function calling
   - `function.rs`: `Function` struct (internal function metadata used by `Tool`)
   - `parameters.rs`: `ParameterProperty` for tool parameters
@@ -266,6 +274,7 @@ Note: a catch-all variant holding a `String` is incompatible with `#[derive(Copy
 | `ChatModel` | Chat, Responses | **GPT-6**: `Gpt6Astra`, `Gpt6Sol`, `Gpt6Luna` / **GPT-5.6**: `Gpt5_6` (alias→Sol), `Gpt5_6Sol`, `Gpt5_6Terra`, `Gpt5_6Luna` / **GPT-5.5**: `Gpt5_5`, `Gpt5_5Pro` / **GPT-5.4**: `Gpt5_4`, `Gpt5_4Pro`, `Gpt5_4Mini`, `Gpt5_4Nano` / **GPT-5.3**: `Gpt5_3ChatLatest` / **Codex**: `Gpt5_3Codex`, `Gpt5_2Codex`, `Gpt5_1Codex`, `Gpt5_1CodexMax` / **GPT-5**: `Gpt5`, `Gpt5Pro`, `Gpt5_2`, `Gpt5_2ChatLatest`, `Gpt5_2Pro`, `Gpt5_1`, `Gpt5_1ChatLatest`, `Gpt5Mini`, `Gpt5Nano` / **Search**: `Gpt5SearchApi`, `Gpt4oSearchPreview`, `Gpt4oMiniSearchPreview` / **Audio**: `GptAudio`, `GptAudio1_5`, `GptAudioMini` / **GPT-4.1**: `Gpt4_1`, `Gpt4_1Mini`, `Gpt4_1Nano` / **GPT-4o**: `Gpt4o`, `Gpt4oMini`, `Gpt4oAudioPreview` / **GPT-4/3.5**: `Gpt4Turbo`, `Gpt4`, `Gpt3_5Turbo`, `Gpt3_5Turbo16k` / **Reasoning**: `O1`, `O1Pro`, `O3`, `O3Pro`, `O3Mini`, `O4Mini` / `Custom(String)` |
 | `EmbeddingModel` | Embedding | `TextEmbedding3Small`, `TextEmbedding3Large`, `TextEmbeddingAda002` |
 | `RealtimeModel` | Realtime | `GptRealtime2_1`, `GptRealtime2_1Mini`, `GptRealtime2`, `GptRealtime1_5`, `GptRealtime`, `GptRealtimeMini`, `GptRealtimeTranslate`, `GptRealtime_2025_08_28` (default), `Custom(String)` |
+| `LiveModel` | Live | `GptLive1` (default), `Custom(String)` |
 | `FineTuningModel` | Fine-tuning | `Gpt41_2025_04_14`, `Gpt41Mini_2025_04_14`, `Gpt41Nano_2025_04_14`, `Gpt4oMini_2024_07_18`, `Gpt4o_2024_08_06`, `Gpt4_0613`, `Gpt35Turbo_0125`, `Babbage002`, `Davinci002`, etc. |
 | `ImageModel` | Images | `GptImage1` (default), `GptImage1Mini`, `GptImage1_5`, `GptImage2`, `GptImage2_5Flare`, `GptImage2_5Sunburst`, `ChatGptImageLatest`, `DallE2`/`DallE3` (retired on OpenAI; Azure only) |
 | `VideoModel` | Videos | `Sora2` (default), `Sora2Pro` |
@@ -338,6 +347,50 @@ while let Some(event) = session.recv().await? {
 }
 session.close().await?;
 ```
+
+**Live API**: Primary WebSocket sessions require input audio to keep advancing:
+```rust
+use openai_tools::live::{LiveClient, LiveVoice};
+use std::time::Duration;
+
+let mut client = LiveClient::new();
+client
+    .instructions("Greet the user briefly as soon as the session starts.")
+    .voice(LiveVoice::Marin);
+
+let session = client.connect().await?;
+let (sender, mut receiver) = session.split();
+
+// Keep real-time input flowing: 100 ms of 24 kHz PCM16 mono silence is 4,800 bytes.
+let audio_sender = sender.clone();
+let audio_task = tokio::spawn(async move {
+    let silence = [0_u8; 4_800];
+    loop {
+        if audio_sender.append_audio_bytes(&silence).await.is_err() {
+            break;
+        }
+        tokio::time::sleep(Duration::from_millis(100)).await;
+    }
+});
+
+tokio::time::sleep(Duration::from_secs(2)).await;
+sender
+    .append_commentary("Tell the user: Hello from the Live API.", None)
+    .await?;
+
+// Continue receiving output events while the audio task keeps the model advancing.
+if let Some(event) = tokio::time::timeout(Duration::from_secs(15), receiver.recv()).await?? {
+    println!("{event:?}");
+}
+
+audio_task.abort();
+drop(sender);
+receiver.close().await?;
+```
+
+Sending commentary without streaming input audio can leave context injection incomplete. Also,
+`session.usage.updated.usage.seconds` is cumulative: keep the latest value rather than adding
+successive updates.
 
 **Conversations API**: Manage long-running conversations with the Responses API:
 ```rust
@@ -676,6 +729,7 @@ Each API (Chat, Embedding, etc.) requires its own complete endpoint URL includin
 | **Conversations** | `/v1/conversations` | CRUD |
 | **Embedding** | `/v1/embeddings` | Basic |
 | **Realtime** | `wss://api.openai.com/v1/realtime` | Function Calling, Audio I/O, VAD, WebSocket |
+| **Live** | `wss://api.openai.com/v1/live/sessions` | Primary WebSocket, Fork, Audio I/O, Delegation |
 | **Models** | `/v1/models` | CRUD |
 | **Files** | `/v1/files` | CRUD, Multipart Upload |
 | **Moderations** | `/v1/moderations` | Basic |
@@ -765,6 +819,14 @@ Each API (Chat, Embedding, etc.) requires its own complete endpoint URL includin
 - Input audio transcription with language hints
 - Noise reduction (near-field, far-field)
 - Function calling support
+
+**Live API Features:**
+- Primary WebSocket sessions and session Fork
+- PCM16, G.711 μ-law, and G.711 A-law audio
+- Client and Responses API delegation
+- The model advances only while input audio is streaming in real time. Keep sending audio continuously (for example, 4,800 bytes of 24 kHz PCM16 silence every 100 ms) while waiting for speech or transcript events.
+- `session.usage.updated.usage.seconds` is cumulative; use the latest value and do not add successive updates.
+- WebRTC session creation, sideband attach, SIP, `transport.*` events, recording download, and Azure authentication are not supported.
 
 **Audio API Features:**
 - Text-to-speech (TTS) with multiple voices: Alloy, Ash, Ballad, Cedar, Coral, Echo, Fable, Marin, Nova, Onyx, Sage, Shimmer, Verse

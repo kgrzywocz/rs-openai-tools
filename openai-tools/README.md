@@ -123,6 +123,7 @@ use openai_tools::videos::request::Videos;
 | **Conversations** | `/v1/conversations` | CRUD |
 | **Embedding** | `/v1/embeddings` | Basic |
 | **Realtime** | `wss://api.openai.com/v1/realtime` | Function Calling, Audio I/O, VAD, WebSocket |
+| **Live** | `wss://api.openai.com/v1/live/sessions` | Primary WebSocket, Fork, Audio I/O, Delegation |
 | **Models** | `/v1/models` | CRUD |
 | **Files** | `/v1/files` | CRUD, Multipart Upload |
 | **Moderations** | `/v1/moderations` | Basic |

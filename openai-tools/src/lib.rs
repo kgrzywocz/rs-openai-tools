@@ -13,6 +13,7 @@
 //! - **Conversations API**: Long-running conversation state management
 //! - **Embedding API**: Text to vector embeddings for semantic search
 //! - **Realtime API**: WebSocket-based real-time audio/text streaming
+//! - **Live API**: Full-duplex speech-to-speech streaming over WebSocket
 //!
 //! ### Content & Media APIs
 //! - **Images API**: DALL-E image generation, editing, and variations
@@ -433,6 +434,7 @@ pub mod embedding;
 pub mod files;
 pub mod fine_tuning;
 pub mod images;
+pub mod live;
 pub mod models;
 pub mod moderations;
 pub mod realtime;

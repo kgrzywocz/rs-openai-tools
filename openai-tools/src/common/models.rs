@@ -1025,6 +1025,54 @@ impl From<&str> for RealtimeModel {
 }
 
 // ============================================================================
+// Live Models
+// ============================================================================
+
+/// Models available for the OpenAI Live API.
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize, Default)]
+#[non_exhaustive]
+pub enum LiveModel {
+    /// GPT Live 1 speech-to-speech model.
+    #[serde(rename = "gpt-live-1")]
+    #[default]
+    GptLive1,
+
+    /// A model identifier not yet represented by a dedicated variant.
+    #[serde(untagged)]
+    Custom(String),
+}
+
+impl LiveModel {
+    /// Returns the model identifier used by the API.
+    pub fn as_str(&self) -> &str {
+        match self {
+            Self::GptLive1 => "gpt-live-1",
+            Self::Custom(model) => model,
+        }
+    }
+
+    /// Creates a custom Live model identifier.
+    pub fn custom(model: impl Into<String>) -> Self {
+        Self::Custom(model.into())
+    }
+}
+
+impl std::fmt::Display for LiveModel {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        formatter.write_str(self.as_str())
+    }
+}
+
+impl From<&str> for LiveModel {
+    fn from(model: &str) -> Self {
+        match model {
+            "gpt-live-1" => Self::GptLive1,
+            other => Self::Custom(other.to_string()),
+        }
+    }
+}
+
+// ============================================================================
 // Fine-tuning Models
 // ============================================================================
 

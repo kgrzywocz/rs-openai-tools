@@ -156,6 +156,7 @@ fn designated_enums_are_non_exhaustive() {
         ("common/models.rs", "ChatModel"),
         ("common/models.rs", "EmbeddingModel"),
         ("common/models.rs", "RealtimeModel"),
+        ("common/models.rs", "LiveModel"),
         ("common/models.rs", "FineTuningModel"),
         ("images/request.rs", "ImageModel"),
         ("videos/request.rs", "VideoModel"),
@@ -171,6 +172,8 @@ fn designated_enums_are_non_exhaustive() {
         ("realtime/audio.rs", "Voice"),
         ("realtime/audio.rs", "AudioFormat"),
         ("realtime/audio.rs", "NoiseReductionType"),
+        ("live/session.rs", "LiveVoice"),
+        ("live/session.rs", "LiveAudioEncoding"),
         ("realtime/session.rs", "Modality"),
         ("realtime/vad.rs", "Eagerness"),
         ("images/request.rs", "ImageSize"),
@@ -193,6 +196,9 @@ fn designated_enums_are_non_exhaustive() {
         ("realtime/conversation.rs", "ItemStatus"),
         ("realtime/events/server.rs", "ResponseStatus"),
         ("realtime/events/server.rs", "ServerEvent"),
+        ("live/events.rs", "CloseReason"),
+        ("live/events.rs", "DelegationTarget"),
+        ("live/events.rs", "ServerEvent"),
         ("videos/response.rs", "VideoStatus"),
     ];
 
