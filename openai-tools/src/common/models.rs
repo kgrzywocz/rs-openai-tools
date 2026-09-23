@@ -127,7 +127,8 @@ impl ParameterSupport {
     /// - frequency_penalty: only 0
     /// - presence_penalty: only 0
     /// - logprobs, top_logprobs, logit_bias: not supported
-    /// - n: only 1
+    /// - n: any value (verified against the API in September 2026 for the
+    ///   o-series and GPT-5 through GPT-6, all of which return `n` choices)
     /// - reasoning: supported
     pub fn reasoning_model() -> Self {
         Self {
@@ -137,7 +138,7 @@ impl ParameterSupport {
             logprobs: false,
             top_logprobs: false,
             logit_bias: false,
-            n_multiple: false,
+            n_multiple: true,
             top_p: ParameterRestriction::FixedValue(1.0),
             reasoning: true,
         }
@@ -147,10 +148,11 @@ impl ParameterSupport {
     /// (`gpt-5-search-api`, `gpt-4o-search-preview`, ...).
     ///
     /// These reject the whole sampling parameter set the same way reasoning
-    /// models do, but they expose no `reasoning` parameter - the API rejects
-    /// it with "Model incompatible request argument supplied".
+    /// models do, and unlike reasoning models they also reject `n > 1`. They
+    /// expose no `reasoning` parameter - the API rejects both with "Model
+    /// incompatible request argument supplied".
     pub fn search_model() -> Self {
-        Self { reasoning: false, ..Self::reasoning_model() }
+        Self { n_multiple: false, reasoning: false, ..Self::reasoning_model() }
     }
 }
 
@@ -1327,7 +1329,7 @@ mod tests {
         assert!(!support.logprobs);
         assert!(!support.top_logprobs);
         assert!(!support.logit_bias);
-        assert!(!support.n_multiple);
+        assert!(support.n_multiple); // The API accepts n > 1 for reasoning models
         assert!(support.reasoning); // Reasoning models support reasoning
     }
 
@@ -1478,7 +1480,7 @@ mod tests {
             assert!(!support.logprobs, "{} should not support logprobs", model.as_str());
             assert!(!support.top_logprobs, "{} should not support top_logprobs", model.as_str());
             assert!(!support.logit_bias, "{} should not support logit_bias", model.as_str());
-            assert!(!support.n_multiple, "{} should only support n=1", model.as_str());
+            assert!(support.n_multiple, "{} should accept n > 1", model.as_str());
             assert!(support.reasoning, "{} should support reasoning parameter", model.as_str());
         }
     }

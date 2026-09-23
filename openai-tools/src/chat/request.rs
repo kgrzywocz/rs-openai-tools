@@ -1012,8 +1012,9 @@ impl ChatCompletion {
 
     /// Sets the number of responses to generate
     ///
-    /// **Note:** Reasoning models (GPT-5, o-series) only support n=1.
-    /// For these models, values other than 1 will be ignored with a warning.
+    /// **Note:** Search models (`gpt-5-search-api`, `gpt-4o-search-preview`, ...)
+    /// only support n=1; for them, values other than 1 are ignored with a
+    /// warning. Reasoning models (GPT-5, GPT-6, o-series) accept any `n`.
     ///
     /// # Arguments
     ///
@@ -1359,18 +1360,14 @@ impl ChatCompletion {
                 tracing::warn!("Reasoning model '{}' does not support logit_bias. Ignoring logit_bias parameter.", model);
                 self.request_body.logit_bias = None;
             }
+        }
 
-            // N: only 1 is supported
-            if let Some(n) = self.request_body.n {
-                if n != 1 {
-                    tracing::warn!(
-                        "Reasoning model '{}' does not support n != 1. \
-                         Ignoring n={} and using default (1).",
-                        model,
-                        n
-                    );
-                    self.request_body.n = None;
-                }
+        // N: reasoning models accept any value; search models only support 1.
+        // Checked here as well as in `n()` because the model may change after `n()` was called.
+        if let Some(n) = self.request_body.n {
+            if n != 1 && !self.request_body.model.parameter_support().n_multiple {
+                tracing::warn!("Model '{}' only supports n=1. Ignoring n={}.", self.request_body.model, n);
+                self.request_body.n = None;
             }
         }
 
@@ -1566,10 +1563,19 @@ mod tests {
     }
 
     #[test]
-    fn test_o1_ignores_n_greater_than_1() {
+    fn test_o1_accepts_n_greater_than_1() {
         let mut chat = ChatCompletion::test_new_with_model(ChatModel::O1);
 
-        // n > 1 should be ignored
+        // The API returns n choices for reasoning models, so n > 1 is kept
+        chat.n(3);
+        assert_eq!(chat.request_body.n, Some(3));
+    }
+
+    #[test]
+    fn test_search_model_ignores_n_greater_than_1() {
+        let mut chat = ChatCompletion::test_new_with_model(ChatModel::Gpt5SearchApi);
+
+        // Search models reject n > 1 ("Model incompatible request argument supplied: n")
         chat.n(3);
         assert_eq!(chat.request_body.n, None);
 
@@ -1657,13 +1663,13 @@ mod tests {
         let logit_bias: HashMap<&str, i32> = [("1234", 10)].iter().cloned().collect();
         chat.logit_bias(logit_bias);
 
-        // All should be ignored
+        // All restricted parameters should be ignored; n is not restricted
         assert_eq!(chat.request_body.temperature, None);
         assert_eq!(chat.request_body.frequency_penalty, None);
         assert_eq!(chat.request_body.presence_penalty, None);
         assert_eq!(chat.request_body.logprobs, None);
         assert_eq!(chat.request_body.top_logprobs, None);
-        assert_eq!(chat.request_body.n, None);
+        assert_eq!(chat.request_body.n, Some(3));
         assert_eq!(chat.request_body.logit_bias, None);
     }
 
@@ -1686,7 +1692,7 @@ mod tests {
         assert_eq!(chat.request_body.presence_penalty, None);
         assert_eq!(chat.request_body.logprobs, None);
         assert_eq!(chat.request_body.top_logprobs, None);
-        assert_eq!(chat.request_body.n, None);
+        assert_eq!(chat.request_body.n, Some(3));
         assert_eq!(chat.request_body.logit_bias, None);
     }
 

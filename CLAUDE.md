@@ -909,7 +909,7 @@ responses.model(ChatModel::Gpt5_2)
 | `logprobs` | Not supported | Ignored with warning if set |
 | `top_logprobs` | Not supported | Ignored with warning if set |
 | `logit_bias` | Not supported | Ignored with warning if set |
-| `n` | Only `1` supported | Values ≠ 1 are ignored with warning |
+| `n` | Any value (search models: only `1`) | Kept for reasoning models; values ≠ 1 are ignored with warning for search models |
 
 #### Responses API Parameter Restrictions
 

@@ -153,19 +153,19 @@ chat.model(ChatModel::custom("ft:gpt-4.1-mini:my-org::abc123"));  // Fine-tuned
 The library validates parameters per model and drops unsupported ones with a
 `tracing::warn!` instead of letting the API reject the request.
 
-| Family | `temperature` / `top_p` / `n` / penalties | `reasoning` | Detect with |
-|--------|:--:|:--:|---|
-| Standard (GPT-4o, GPT-4.1, `gpt-audio`, ...) | Yes | No | - |
-| Reasoning (GPT-6, GPT-5.x, `*-codex`, o-series) | No (fixed) | Yes | `is_reasoning_model()` |
-| Search (`gpt-5-search-api`, `gpt-4o-*-search-preview`) | No (fixed) | No | `is_search_model()` |
+| Family | `temperature` / `top_p` / penalties | `n > 1` | `reasoning` | Detect with |
+|--------|:--:|:--:|:--:|---|
+| Standard (GPT-4o, GPT-4.1, `gpt-audio`, ...) | Yes | Yes | No | - |
+| Reasoning (GPT-6, GPT-5.x, `*-codex`, o-series) | No (fixed) | Yes | Yes | `is_reasoning_model()` |
+| Search (`gpt-5-search-api`, `gpt-4o-*-search-preview`) | No (fixed) | No | No | `is_search_model()` |
 
 Two things are easy to get wrong here:
 
 - The **`*-chat-latest`** aliases (`gpt-5.1-chat-latest`, `gpt-5.2-chat-latest`,
   `gpt-5.3-chat-latest`) point at the non-reasoning "Instant" snapshots, so they
   accept the **full** standard parameter set despite the `gpt-5` prefix.
-- **Search models** reject the same parameters as reasoning models but expose no
-  `reasoning` parameter, so they are a separate category.
+- **Search models** reject the same sampling parameters as reasoning models, and
+  also `n > 1`, but expose no `reasoning` parameter, so they are a separate category.
 
 **Responses API only** (no Chat Completions endpoint): `gpt-5.5-pro`,
 `gpt-5.4-pro`, `gpt-5.2-pro`, `gpt-5-pro`, `o3-pro`, and every `*-codex` model.
