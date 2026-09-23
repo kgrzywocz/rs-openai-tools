@@ -123,7 +123,7 @@ impl RealtimeClient {
 
     /// Set the model using a string ID (for backward compatibility).
     ///
-    /// Prefer using [`model`] with `RealtimeModel` enum for type safety.
+    /// Prefer using [`model`](Self::model) with `RealtimeModel` enum for type safety.
     #[deprecated(since = "0.2.0", note = "Use `model(RealtimeModel)` instead for type safety")]
     pub fn model_id(&mut self, model_id: impl Into<String>) -> &mut Self {
         self.model = RealtimeModel::from(model_id.into().as_str());

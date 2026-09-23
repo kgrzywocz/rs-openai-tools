@@ -58,6 +58,10 @@ cargo make format-all  # includes clippy and taplo
 
 # Lint
 cargo clippy
+
+# Check docs (fails on broken intra-doc links and other rustdoc warnings)
+RUSTDOCFLAGS="-D warnings" cargo doc --no-deps -p openai-tools
+cargo make doc-check
 ```
 
 **Note:** Always prefer `cargo nextest run` over `cargo test` for faster parallel test execution.

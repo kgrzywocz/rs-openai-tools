@@ -164,32 +164,32 @@ impl ParameterSupport {
 /// # Model Categories
 ///
 /// ## GPT-6 Series (Latest Flagship)
-/// - [`Gpt6Astra`]: Flagship model ($10 input / $50 output per million tokens)
-/// - [`Gpt6Sol`]: Complex coding and professional tasks ($2 / $10)
-/// - [`Gpt6Luna`]: High-volume routine tasks ($0.10 / $0.50)
+/// - [`Gpt6Astra`](Self::Gpt6Astra): Flagship model ($10 input / $50 output per million tokens)
+/// - [`Gpt6Sol`](Self::Gpt6Sol): Complex coding and professional tasks ($2 / $10)
+/// - [`Gpt6Luna`](Self::Gpt6Luna): High-volume routine tasks ($0.10 / $0.50)
 ///
 /// ## GPT-5 Series
-/// - [`Gpt5_2`]: GPT-5.2 Thinking - flagship model for coding and agentic tasks
-/// - [`Gpt5_2ChatLatest`]: GPT-5.2 Instant - fast workhorse for everyday work
-/// - [`Gpt5_2Pro`]: GPT-5.2 Pro - smartest for difficult questions (Responses API only)
-/// - [`Gpt5_1`]: GPT-5.1 - configurable reasoning and non-reasoning
-/// - [`Gpt5_1CodexMax`]: GPT-5.1 Codex Max - powers Codex CLI
-/// - [`Gpt5Mini`]: GPT-5 Mini - smaller, faster variant
+/// - [`Gpt5_2`](Self::Gpt5_2): GPT-5.2 Thinking - flagship model for coding and agentic tasks
+/// - [`Gpt5_2ChatLatest`](Self::Gpt5_2ChatLatest): GPT-5.2 Instant - fast workhorse for everyday work
+/// - [`Gpt5_2Pro`](Self::Gpt5_2Pro): GPT-5.2 Pro - smartest for difficult questions (Responses API only)
+/// - [`Gpt5_1`](Self::Gpt5_1): GPT-5.1 - configurable reasoning and non-reasoning
+/// - [`Gpt5_1CodexMax`](Self::Gpt5_1CodexMax): GPT-5.1 Codex Max - powers Codex CLI
+/// - [`Gpt5Mini`](Self::Gpt5Mini): GPT-5 Mini - smaller, faster variant
 ///
 /// ## GPT-4.1 Series
-/// - [`Gpt4_1`]: 1M context window flagship
-/// - [`Gpt4_1Mini`]: Balanced performance and cost
-/// - [`Gpt4_1Nano`]: Fastest and most cost-efficient
+/// - [`Gpt4_1`](Self::Gpt4_1): 1M context window flagship
+/// - [`Gpt4_1Mini`](Self::Gpt4_1Mini): Balanced performance and cost
+/// - [`Gpt4_1Nano`](Self::Gpt4_1Nano): Fastest and most cost-efficient
 ///
 /// ## GPT-4o Series
-/// - [`Gpt4o`]: High-intelligence flagship model
-/// - [`Gpt4oMini`]: Cost-effective GPT-4o variant
-/// - [`Gpt4oAudioPreview`]: Audio-capable GPT-4o
+/// - [`Gpt4o`](Self::Gpt4o): High-intelligence flagship model
+/// - [`Gpt4oMini`](Self::Gpt4oMini): Cost-effective GPT-4o variant
+/// - [`Gpt4oAudioPreview`](Self::Gpt4oAudioPreview): Audio-capable GPT-4o
 ///
 /// ## Reasoning Models (o-series)
-/// - [`O1`], [`O1Pro`]: Full reasoning models
-/// - [`O3`], [`O3Mini`]: Latest reasoning models
-/// - [`O4Mini`]: Fast, cost-efficient reasoning
+/// - [`O1`](Self::O1), [`O1Pro`](Self::O1Pro): Full reasoning models
+/// - [`O3`](Self::O3), [`O3Mini`](Self::O3Mini): Latest reasoning models
+/// - [`O4Mini`](Self::O4Mini): Fast, cost-efficient reasoning
 ///
 /// # Reasoning Model Restrictions
 ///
@@ -819,9 +819,9 @@ impl From<String> for ChatModel {
 ///
 /// # Available Models
 ///
-/// - [`TextEmbedding3Small`]: Improved, performant model (default)
-/// - [`TextEmbedding3Large`]: Most capable model for English and non-English
-/// - [`TextEmbeddingAda002`]: Legacy model (not recommended for new projects)
+/// - [`TextEmbedding3Small`](Self::TextEmbedding3Small): Improved, performant model (default)
+/// - [`TextEmbedding3Large`](Self::TextEmbedding3Large): Most capable model for English and non-English
+/// - [`TextEmbeddingAda002`](Self::TextEmbeddingAda002): Legacy model (not recommended for new projects)
 ///
 /// # Example
 ///
@@ -916,7 +916,7 @@ impl From<&str> for EmbeddingModel {
 ///
 /// # Available Models
 ///
-/// - [`GptRealtime_2025_08_28`]: GPT Realtime model (default)
+/// - [`GptRealtime_2025_08_28`](Self::GptRealtime_2025_08_28): GPT Realtime model (default)
 ///
 /// # Example
 ///
@@ -1087,19 +1087,19 @@ impl From<&str> for LiveModel {
 /// # Available Models
 ///
 /// ## GPT-4.1 Series (Latest)
-/// - [`Gpt41_2025_04_14`]: GPT-4.1 for fine-tuning
-/// - [`Gpt41Mini_2025_04_14`]: GPT-4.1 Mini for fine-tuning
-/// - [`Gpt41Nano_2025_04_14`]: GPT-4.1 Nano for fine-tuning
+/// - [`Gpt41_2025_04_14`](Self::Gpt41_2025_04_14): GPT-4.1 for fine-tuning
+/// - [`Gpt41Mini_2025_04_14`](Self::Gpt41Mini_2025_04_14): GPT-4.1 Mini for fine-tuning
+/// - [`Gpt41Nano_2025_04_14`](Self::Gpt41Nano_2025_04_14): GPT-4.1 Nano for fine-tuning
 ///
 /// ## GPT-4o Series
-/// - [`Gpt4oMini_2024_07_18`]: GPT-4o Mini for fine-tuning
-/// - [`Gpt4o_2024_08_06`]: GPT-4o for fine-tuning
+/// - [`Gpt4oMini_2024_07_18`](Self::Gpt4oMini_2024_07_18): GPT-4o Mini for fine-tuning
+/// - [`Gpt4o_2024_08_06`](Self::Gpt4o_2024_08_06): GPT-4o for fine-tuning
 ///
 /// ## GPT-4 Series
-/// - [`Gpt4_0613`]: GPT-4 for fine-tuning
+/// - [`Gpt4_0613`](Self::Gpt4_0613): GPT-4 for fine-tuning
 ///
 /// ## GPT-3.5 Series
-/// - [`Gpt35Turbo_0125`]: GPT-3.5 Turbo for fine-tuning
+/// - [`Gpt35Turbo_0125`](Self::Gpt35Turbo_0125): GPT-3.5 Turbo for fine-tuning
 ///
 /// # Example
 ///

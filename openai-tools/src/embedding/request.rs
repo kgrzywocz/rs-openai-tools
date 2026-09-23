@@ -159,7 +159,8 @@ const EMBEDDINGS_PATH: &str = "embeddings";
 ///
 /// This struct provides a builder pattern interface for constructing embedding
 /// requests with various parameters. Use [`Embedding::new()`] to create a new
-/// instance, then chain methods to configure the request before calling [`embed()`].
+/// instance, then chain methods to configure the request before calling
+/// [`embed()`](Embedding::embed).
 ///
 /// # Providers
 ///
@@ -290,7 +291,7 @@ impl Embedding {
     ///
     /// # Arguments
     ///
-    /// * `url` - The base URL (e.g., "https://my-proxy.example.com/v1")
+    /// * `url` - The base URL (e.g., `https://my-proxy.example.com/v1`)
     ///
     /// # Returns
     ///
@@ -331,7 +332,7 @@ impl Embedding {
 
     /// Sets the model using a string ID (for backward compatibility).
     ///
-    /// Prefer using [`model`] with `EmbeddingModel` enum for type safety.
+    /// Prefer using [`model`](Self::model) with `EmbeddingModel` enum for type safety.
     ///
     /// # Arguments
     ///
@@ -375,7 +376,7 @@ impl Embedding {
     /// Sets a single text input for embedding.
     ///
     /// Use this method when you want to embed a single piece of text.
-    /// For multiple texts, use [`input_text_array`] instead.
+    /// For multiple texts, use [`input_text_array`](Self::input_text_array) instead.
     ///
     /// # Arguments
     ///

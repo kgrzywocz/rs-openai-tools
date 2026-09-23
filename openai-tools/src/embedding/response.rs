@@ -104,11 +104,11 @@ use serde::Deserialize;
 #[derive(Debug, Clone, Deserialize)]
 #[serde(untagged)]
 pub enum Embedding {
-    /// 1D embedding: Vec<f32>
+    /// 1D embedding: `Vec<f32>`
     OneDim(Vec<f32>),
-    /// 2D embedding: Vec<Vec<f32>>
+    /// 2D embedding: `Vec<Vec<f32>>`
     TwoDim(Vec<Vec<f32>>),
-    /// 3D embedding: Vec<Vec<Vec<f32>>>
+    /// 3D embedding: `Vec<Vec<Vec<f32>>>`
     ThreeDim(Vec<Vec<Vec<f32>>>),
 }
 

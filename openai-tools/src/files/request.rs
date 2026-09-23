@@ -187,7 +187,7 @@ impl Files {
     ///
     /// # Arguments
     ///
-    /// * `url` - The base URL (e.g., "https://my-proxy.example.com/v1")
+    /// * `url` - The base URL (e.g., `https://my-proxy.example.com/v1`)
     ///
     /// # Returns
     ///

@@ -1447,7 +1447,7 @@ impl Responses {
     ///
     /// # Arguments
     ///
-    /// * `url` - The base URL (e.g., "https://my-proxy.example.com/v1")
+    /// * `url` - The base URL (e.g., `https://my-proxy.example.com/v1`)
     ///
     /// # Returns
     ///
@@ -1503,7 +1503,7 @@ impl Responses {
 
     /// Sets the model using a string ID (for backward compatibility).
     ///
-    /// Prefer using [`model`] with `ChatModel` enum for type safety.
+    /// Prefer using [`model`](Self::model) with `ChatModel` enum for type safety.
     ///
     /// # Arguments
     ///

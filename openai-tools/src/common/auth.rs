@@ -122,7 +122,7 @@ pub enum AuthProvider {
 pub struct OpenAIAuth {
     /// The API key (sk-...)
     api_key: String,
-    /// Base URL for API requests (default: https://api.openai.com/v1)
+    /// Base URL for API requests (default: `https://api.openai.com/v1`)
     base_url: String,
 }
 

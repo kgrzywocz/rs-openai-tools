@@ -24,6 +24,10 @@ script = "taplo fmt --option reorder_keys=true"
 description = "Reformat the code using rustfmt."
 script = "cargo fmt -- --emit files"
 
+[tasks.doc-check]
+description = "Build the docs and fail on any rustdoc warning."
+script = 'RUSTDOCFLAGS="-D warnings" cargo doc --no-deps -p openai-tools'
+
 # ============ TEST TASKS ============
 [tasks.test]
 extend = "set-env"
