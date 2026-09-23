@@ -868,9 +868,9 @@ OpenAI's reasoning models (GPT-6 series: `gpt-6-*`, GPT-5 series: `gpt-5.6-*`, `
 
 **Search models** (`gpt-5-search-api`, `gpt-4o-search-preview`, `gpt-4o-mini-search-preview`) are a third category: they reject the entire sampling parameter set (`temperature`, `top_p`, `n`, `logprobs`, both penalties) exactly like reasoning models, but they expose **no** `reasoning` parameter. Use `ChatModel::is_search_model()`; `parameter_support()` returns `ParameterSupport::search_model()` for them.
 
-#### GPT-5 Series Reasoning Configuration
+#### GPT-5 / GPT-6 Series Reasoning Configuration
 
-GPT-5 models support configurable reasoning effort via the `reasoning` parameter (Responses API only):
+GPT-5 and GPT-6 models support configurable reasoning effort via the `reasoning` parameter (Responses API only):
 
 ```rust
 use openai_tools::responses::request::{Responses, ReasoningEffort, ReasoningSummary};
@@ -890,13 +890,15 @@ responses.model(ChatModel::Gpt5_2)
 **ReasoningEffort levels:**
 | Level | Description | Supported Models |
 |-------|-------------|------------------|
-| `None` | No reasoning tokens (fastest) | GPT-5.1, GPT-5.2 |
+| `None` | No reasoning tokens (fastest) | GPT-5.1, GPT-5.2, GPT-6 Sol, GPT-6 Luna |
 | `Minimal` | Very few reasoning tokens | GPT-5 Mini |
 | `Low` | Light reasoning | GPT-5.1, GPT-5.2, o-series |
 | `Medium` | Balanced reasoning | All reasoning models |
 | `High` | Deep reasoning | All reasoning models |
-| `Xhigh` | Maximum reasoning | GPT-5.2 Pro, GPT-5.1 Codex Max |
+| `Xhigh` | Maximum reasoning | GPT-5.2 Pro, GPT-5.1 Codex Max, GPT-6 series |
 | `Max` | Maximum reasoning (Responses API only) | GPT-6 series |
+
+GPT-6 Astra は `none` と `minimal` を，GPT-6 Sol / Luna は `minimal` を拒否する．
 
 #### Chat Completions API Parameter Restrictions
 

@@ -93,6 +93,7 @@ use openai_tools::chat::request::ChatCompletion;
 use openai_tools::responses::request::Responses;
 use openai_tools::embedding::request::Embedding;
 use openai_tools::realtime::RealtimeClient;
+use openai_tools::live::LiveClient;
 use openai_tools::conversations::request::Conversations;
 use openai_tools::models::request::Models;
 use openai_tools::files::request::Files;
@@ -331,6 +332,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 Real-time audio and text communication through WebSocket:
 
 ```rust
+use openai_tools::common::models::RealtimeModel;
 use openai_tools::realtime::{RealtimeClient, Modality, Voice};
 use openai_tools::realtime::events::server::ServerEvent;
 
@@ -338,7 +340,7 @@ use openai_tools::realtime::events::server::ServerEvent;
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut client = RealtimeClient::new();
     client
-        .model("gpt-realtime-2025-08-28")
+        .model(RealtimeModel::GptRealtime_2025_08_28)
         .modalities(vec![Modality::Text, Modality::Audio])
         .voice(Voice::Alloy)
         .instructions("You are a helpful assistant.");
@@ -362,6 +364,64 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 ```
+
+## Live API
+
+Full-duplex voice conversations with `gpt-live-1` over a primary WebSocket.
+Reasoning and tool execution are delegated to a Responses API model or to your application.
+
+```rust
+use openai_tools::live::{LiveClient, LiveVoice, ServerEvent};
+use std::time::Duration;
+
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let mut client = LiveClient::new();
+    client.instructions("Greet the user briefly as soon as the session starts.").voice(LiveVoice::Marin);
+
+    let session = client.connect().await?;
+    let (sender, mut receiver) = session.split();
+
+    // Keep real-time input flowing: 100 ms of 24 kHz PCM16 mono silence is 4,800 bytes.
+    let audio_sender = sender.clone();
+    let audio_task = tokio::spawn(async move {
+        let silence = [0_u8; 4_800];
+        loop {
+            if audio_sender.append_audio_bytes(&silence).await.is_err() {
+                break;
+            }
+            tokio::time::sleep(Duration::from_millis(100)).await;
+        }
+    });
+
+    tokio::time::sleep(Duration::from_secs(2)).await;
+    sender.append_commentary("Tell the user: Hello from the Live API.", None).await?;
+
+    let deadline = tokio::time::Instant::now() + Duration::from_secs(15);
+    loop {
+        let event = match tokio::time::timeout_at(deadline, receiver.recv()).await {
+            Ok(event) => event?,
+            Err(_) => break,
+        };
+
+        match event {
+            Some(ServerEvent::OutputTranscriptDelta(event)) => print!("{}", event.delta),
+            Some(ServerEvent::SessionClosed(_)) | None => break,
+            _ => {}
+        }
+    }
+
+    audio_task.abort();
+    drop(sender);
+    receiver.close().await?;
+    Ok(())
+}
+```
+
+- Keep streaming input audio in real time or the model will not advance. Sending commentary without audio produces no output and ends with `context_injection_incomplete` when the session closes.
+- `session.usage.updated` reports cumulative `usage.seconds`; keep the latest value instead of adding successive updates.
+- Configure Responses delegation with `Delegation::Responses(ResponsesDelegationConfig { .. })`.
+- Not yet supported: WebRTC session creation, sideband (`/attach`), SIP, recording downloads, and Azure.
 
 ## Models API
 
@@ -666,6 +726,36 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 ```
 
 ## Update History
+
+<details>
+<summary>v3.1.0</summary>
+
+All additions in this release are non-breaking because 3.0.0 made the public enums `#[non_exhaustive]`.
+
+**New models**
+
+- `ChatModel`: `Gpt6Astra`, `Gpt6Sol`, `Gpt6Luna`
+- `ImageModel`: `GptImage2_5Flare`, `GptImage2_5Sunburst`
+- `LiveModel`: `GptLive1`
+
+**New API**
+
+- Added the `live` module with primary WebSocket and fork support. Its main types are `LiveClient`, `LiveSession`, `LiveSender`, `LiveReceiver`, `LiveModel`, `LiveVoice`, `LiveAudioFormat`, `ClientEvent`, `ServerEvent`, `Delegation`, and `ResponsesDelegationConfig`.
+
+**New values**
+
+- `ReasoningEffort::Max` is available only in the Responses API and is accepted by the GPT-6 series. Chat Completions rejects it.
+- `ImageQuality::Max` is available only for GPT Image 2.5.
+
+**Fixes**
+
+- Reasoning models previously discarded `ChatCompletion::n(n > 1)` with a warning. The API accepts `n > 1` for the o-series, GPT-5 series, and GPT-6 series, so the library now sends it unchanged. This is a behavior change: an `n` value that was previously discarded now reaches the API and returns `n` choices. Search models remain limited to `n = 1`.
+
+**Docs**
+
+- Fixed the Realtime API example, which did not compile because it passed the model as a string instead of a `RealtimeModel` value.
+
+</details>
 
 <details>
 <summary>v3.0.0</summary>

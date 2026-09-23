@@ -12,13 +12,14 @@ use openai_tools::embedding::request::Embedding;
 use openai_tools::files::request::Files;
 use openai_tools::fine_tuning::request::FineTuning;
 use openai_tools::images::request::Images;
+use openai_tools::live::{LiveClient, LiveVoice};
 use openai_tools::models::request::Models;
 use openai_tools::moderations::request::Moderations;
-use openai_tools::realtime::RealtimeClient;
+use openai_tools::realtime::{Modality, RealtimeClient, Voice};
 use openai_tools::responses::request::Responses;
 use openai_tools::videos::request::Videos;
 
-use openai_tools::common::models::ChatModel;
+use openai_tools::common::models::{ChatModel, RealtimeModel};
 use openai_tools::images::request::{GenerateOptions, ImageModel, ImageQuality, ImageSize};
 use openai_tools::videos::request::{CreateVideoOptions, SortOrder, VideoSeconds, VideoSize, VideoVariant};
 
@@ -36,6 +37,82 @@ async fn images_sample() -> Result<(), Box<dyn std::error::Error>> {
 
     let bytes = response.data[0].as_bytes().unwrap()?;
     std::fs::write("sunset.png", bytes)?;
+    Ok(())
+}
+
+#[allow(dead_code, unused_variables)]
+async fn realtime_sample() -> Result<(), Box<dyn std::error::Error>> {
+    use openai_tools::realtime::events::server::ServerEvent;
+
+    let mut client = RealtimeClient::new();
+    client
+        .model(RealtimeModel::GptRealtime_2025_08_28)
+        .modalities(vec![Modality::Text, Modality::Audio])
+        .voice(Voice::Alloy)
+        .instructions("You are a helpful assistant.");
+
+    let mut session = client.connect().await?;
+
+    // Send a text message
+    session.send_text("Hello!").await?;
+    session.create_response(None).await?;
+
+    // Process events
+    while let Some(event) = session.recv().await? {
+        match event {
+            ServerEvent::ResponseTextDelta(e) => print!("{}", e.delta),
+            ServerEvent::ResponseDone(_) => break,
+            _ => {}
+        }
+    }
+
+    session.close().await?;
+    Ok(())
+}
+
+#[allow(dead_code, unused_variables)]
+async fn live_sample() -> Result<(), Box<dyn std::error::Error>> {
+    use openai_tools::live::ServerEvent;
+    use std::time::Duration;
+
+    let mut client = LiveClient::new();
+    client.instructions("Greet the user briefly as soon as the session starts.").voice(LiveVoice::Marin);
+
+    let session = client.connect().await?;
+    let (sender, mut receiver) = session.split();
+
+    // Keep real-time input flowing: 100 ms of 24 kHz PCM16 mono silence is 4,800 bytes.
+    let audio_sender = sender.clone();
+    let audio_task = tokio::spawn(async move {
+        let silence = [0_u8; 4_800];
+        loop {
+            if audio_sender.append_audio_bytes(&silence).await.is_err() {
+                break;
+            }
+            tokio::time::sleep(Duration::from_millis(100)).await;
+        }
+    });
+
+    tokio::time::sleep(Duration::from_secs(2)).await;
+    sender.append_commentary("Tell the user: Hello from the Live API.", None).await?;
+
+    let deadline = tokio::time::Instant::now() + Duration::from_secs(15);
+    loop {
+        let event = match tokio::time::timeout_at(deadline, receiver.recv()).await {
+            Ok(event) => event?,
+            Err(_) => break,
+        };
+
+        match event {
+            Some(ServerEvent::OutputTranscriptDelta(event)) => print!("{}", event.delta),
+            Some(ServerEvent::SessionClosed(_)) | None => break,
+            _ => {}
+        }
+    }
+
+    audio_task.abort();
+    drop(sender);
+    receiver.close().await?;
     Ok(())
 }
 
@@ -97,6 +174,7 @@ fn module_imports_resolve() -> Result<(), Box<dyn std::error::Error>> {
     let _ = Responses::new();
     let _ = Embedding::new();
     let _ = RealtimeClient::new();
+    let _ = LiveClient::new();
     let _ = Conversations::new()?;
     let _ = Models::new()?;
     let _ = Files::new()?;

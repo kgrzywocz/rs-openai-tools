@@ -234,8 +234,9 @@
 //! | Simple Q&A, chatbot | Chat Completions | [`chat`] |
 //! | Multi-turn assistant with state | Responses + Conversations | [`responses`], [`conversations`] |
 //! | Real-time voice interaction | Realtime | [`realtime`] |
+//! | Full-duplex voice with backend delegation | Live | [`live`] |
 //! | Semantic search, similarity | Embeddings | [`embedding`] |
-//! | Image generation (DALL-E) | Images | [`images`] |
+//! | Image generation (GPT Image) | Images | [`images`] |
 //! | Speech-to-text, TTS | Audio | [`audio`] |
 //! | Content moderation | Moderations | [`moderations`] |
 //! | Bulk processing (50% off) | Batch | [`batch`] |
@@ -265,6 +266,10 @@
 //!   - [`RealtimeClient`](realtime::RealtimeClient) and
 //!     [`RealtimeSession`](realtime::RealtimeSession)
 //!   - [`realtime::events`] - Client/server event types
+//!
+//! - [`live`] - Live API (WebSocket)
+//!   - [`LiveClient`](live::LiveClient) and [`LiveSession`](live::LiveSession)
+//!   - [`live::events`] - Client/server event types
 //!
 //! ### Content & Media APIs
 //!
